@@ -4,7 +4,10 @@ Entorno WebXR (Three.js) para Meta Quest 3 de **INET · Cybersecurity Experts**:
 
 **Demo en vivo:** https://tekb4lam.github.io/Planta-Automotriz-VR-IN/ — ábrela en Meta Quest Browser y pulsa "Entrar a VR".
 
-Todo vive en un solo archivo autocontenido (`index.html`, copia en `dist/`).
+La app es `index.html` + la carpeta `assets/` (modelos 3D y texturas optimizados para Quest 3, ~4.5 MB).
+Si `assets/` no está disponible, la planta se dibuja con geometría procedural.
+
+Modelos: robots KUKA KR 210 y ABB IRB 5400 con ejes reales, autos con LOD, operarios con esqueleto animado y utilería de Poly Haven. Ver **CREDITOS.md** (licencias y ligas).
 
 ## Abrirlo en el Quest 3
 WebXR solo funciona en un contexto seguro (HTTPS o localhost).
@@ -20,5 +23,6 @@ WebXR solo funciona en un contexto seguro (HTTPS o localhost).
 WASD/flechas para caminar, arrastrar para mirar, 1–6 ataques, F defensas, N red OT, V siguiente zona, R restablecer.
 
 ## Editar
-`npm install && node build.mjs` regenera `index.html` y `dist/`; haz commit y push para actualizar Pages. Parámetros en `src/config.js` (marca, costo por minuto de paro, JPH, ubicaciones).
+`npm install && node build.mjs` regenera `index.html`; haz commit y push para actualizar Pages.
+`tools/robot2glb.py` convierte robots URDF a GLB y `tools/ik.py` calcula sus trayectorias. Parámetros en `src/config.js` (marca, costo por minuto de paro, JPH, ubicaciones).
 Escenarios, textos, técnicas ATT&CK for ICS y mitigaciones en `src/scenarios.js`.

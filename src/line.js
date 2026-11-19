@@ -2,6 +2,9 @@ import * as THREE from 'three';
 import { LINE, slotX } from './config.js';
 import { Batcher, G, M, P, mergeColored, mergeParts, slab, CanvasPanel, rand, damp, smooth, clamp, lerp, FONT, roundRect } from './util.js';
 import { S, lineRunning } from './state.js';
+import { A } from './assets.js';
+import { RealRobot } from './robots.js';
+import { RealWorker } from './people.js';
 
 const C = { robot: 0xff6a00, dark: 0x2b2f33, white: 0xececec, gray: 0x707880, copper: 0xb87333 };
 const HOME = [0, -0.05, 0.55, -1.3];
@@ -101,7 +104,7 @@ function workerGeos(vest, helmet) {
   };
   return wCache[key];
 }
-export class Worker {
+export class WorkerP {
   constructor(scene, x, z, yaw, vest = 0xff8c1a, helmet = 0xffffff) {
     const g = workerGeos(vest, helmet);
     this.root = new THREE.Group(); this.root.position.set(x, 0, z); this.root.rotation.y = yaw; this.yaw = yaw;
@@ -161,6 +164,61 @@ function miscGeo(s) {
 const CAR_COLORS = [0xa50d16, 0x0f3d7a, 0xf0f0f0, 0x151515, 0x8a9299, 0x2f5f3a, 0xf0f0f0, 0x8a9299, 0x5a6f86];
 const RAW = new THREE.Color(0xa7adb3), ECOAT = new THREE.Color(0x4b4f55), PRIMER = new THREE.Color(0xcfcfc8), BURNT = new THREE.Color(0x3b2717);
 
+// Carrocería con el modelo 3D real (LOD: alto detalle cerca, bajo detalle lejos)
+let CARM;
+function carMats() {
+  if (CARM) return CARM;
+  CARM = {
+    interior: new THREE.MeshStandardMaterial({ color: 0x1d1f22, roughness: 0.8 }),
+    chassis: new THREE.MeshStandardMaterial({ color: 0x2a2c30, roughness: 0.7, metalness: 0.4 }),
+    tires: new THREE.MeshStandardMaterial({ color: 0x141414, roughness: 0.9 }),
+    rims: new THREE.MeshStandardMaterial({ color: 0xc7cbd0, roughness: 0.25, metalness: 0.95 }),
+    trim: new THREE.MeshStandardMaterial({ color: 0x15171a, roughness: 0.5, metalness: 0.2 }),
+    lights: new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xfff2d8, emissiveIntensity: 0.4, roughness: 0.1 }),
+    glass: new THREE.MeshStandardMaterial({ color: 0x0b141c, roughness: 0.05, metalness: 0.3, transparent: true, opacity: 0.55 }),
+  };
+  return CARM;
+}
+const SKID_GEO = mergeColored([[P.box(4.6, 0.08, 0.12, 0, -0.1, 0.5), 0x707880], [P.box(4.6, 0.08, 0.12, 0, -0.1, -0.5), 0x707880], [P.box(0.12, 0.08, 1.1, 1.8, -0.1, 0), 0x707880], [P.box(0.12, 0.08, 1.1, -1.8, -0.1, 0), 0x707880],
+  ...[[1.5, 0.5], [1.5, -0.5], [-1.5, 0.5], [-1.5, -0.5]].map(([x, z]) => [P.box(0.1, 0.36, 0.1, x, 0.08, z), 0x444444])]);
+class CarBody {
+  constructor(scene, slot) {
+    this.g = new THREE.Group();
+    this.mat = new THREE.MeshStandardMaterial({ color: RAW, metalness: 0.85, roughness: 0.4, envMapIntensity: 1.2 });
+    const cm = carMats();
+    this.levels = [];
+    const lod = new THREE.LOD();
+    for (const [parts, dist] of [[A.car.hi, 0], [A.car.lo, 14]]) {
+      if (!parts) continue;
+      const grp = new THREE.Group();
+      const L = { parts, paint: new THREE.Mesh(parts._paint[1], this.mat) };
+      grp.add(L.paint);
+      for (const c of ['interior', 'chassis', 'tires', 'rims', 'trim', 'lights', 'glass']) if (parts[c]) { L[c] = new THREE.Mesh(parts[c], cm[c]); grp.add(L[c]); }
+      lod.addLevel(grp, dist);
+      this.levels.push(L);
+    }
+    this.g.add(lod);
+    this.skid = new THREE.Mesh(SKID_GEO, M.vc);
+    this.g.add(this.skid);
+    scene.add(this.g);
+    this.reset(slot);
+    this.setShown(slot);
+  }
+  reset(slot) { Body.prototype.reset.call(this, slot); }
+  setShown(s) {
+    if (s === this.shown) return;
+    this.shown = s;
+    for (const L of this.levels) {
+      L.paint.geometry = L.parts._paint[Math.max(1, L.parts._paintKey(s))];
+      const vis = { interior: s >= 16, chassis: s >= 17, tires: s >= 18, rims: s >= 18, glass: s >= 19, trim: s >= 20, lights: s >= 21 };
+      for (const c in vis) if (L[c]) L[c].visible = vis[c];
+    }
+    this.skid.visible = s <= 15;
+    this.applyColor();
+  }
+  applyColor() { Body.prototype.applyColor.call(this); }
+}
+
 class Body {
   constructor(scene, slot) {
     this.g = new THREE.Group();
@@ -206,11 +264,15 @@ export class Line {
     this.onArrive = null;
     this.buildStatic(scene);
     this.bodies = [];
-    for (let s = -1; s < this.N; s++) this.bodies.push(new Body(scene, s));
+    for (let s = -1; s < this.N; s++) this.bodies.push(A.car ? new CarBody(scene, s) : new Body(scene, s));
     this.robots = [];
     const R = (slot, side, type, dx = 0, color) => {
-      const z = LINE.z + side * 2.45;
-      const r = new Robot(scene, slotX(slot) + dx, z, side > 0 ? Math.PI / 2 : -Math.PI / 2, type, color);
+      let r;
+      const yaw = side > 0 ? Math.PI / 2 : -Math.PI / 2;
+      if (A.ok) {
+        const kind = type === 'paint' ? 'irb5400' : 'kr210', job = type === 'paint' ? 'paint' : type === 'grip' ? 'pick' : 'weld';
+        r = new RealRobot(scene, slotX(slot) + dx, LINE.z + side * A.robot_pathsInfo[kind].D, yaw, kind, job);
+      } else r = new Robot(scene, slotX(slot) + dx, LINE.z + side * 2.45, yaw, type, color);
       this.robots.push({ r, slot, zone: slot <= 7 ? 'biw' : slot <= 13 ? 'paint' : 'asm' });
       return r;
     };
@@ -221,6 +283,7 @@ export class Line {
     R(19, -1, 'grip', 0.0, C.white);
     // operarios
     this.workers = [];
+    const Worker = A.worker ? RealWorker : WorkerP;
     const vests = [0xff8c1a, 0xd9ff3a];
     for (let i = 16; i <= 21; i++) {
       if (i !== 17) this.workers.push({ w: new Worker(scene, slotX(i) + rand(-0.8, 0.8), LINE.z + 2.0, Math.PI, vests[i % 2], 0xffffff), slot: i });
@@ -229,10 +292,11 @@ export class Line {
     this.workers.push({ w: new Worker(scene, slotX(23) + 0.5, LINE.z + 2.1, Math.PI, 0x2f80ed, 0xffffff), slot: 23 });
     this.workers.push({ w: new Worker(scene, slotX(22) - 2.8, LINE.z + 2.2, Math.PI * 0.75, 0x2f80ed, 0xffffff), slot: 22 });
     // peatones en pasillo
+    const WalkerC = A.worker ? RealWorker : WorkerP;
     this.walkers = [
-      { w: new Worker(scene, -80, 2.4, Math.PI / 2, 0xd9ff3a, 0xffffff), x0: -110, x1: 100, z: 2.4, v: 1.25 },
-      { w: new Worker(scene, 30, 4.6, -Math.PI / 2, 0xff8c1a, 0x2f80ed), x0: -60, x1: 110, z: 4.6, v: -1.1 },
-      { w: new Worker(scene, -20, 3.2, Math.PI / 2, 0xd9ff3a, 0xffd21a), x0: -95, x1: 60, z: 3.2, v: 1.0 },
+      { w: new WalkerC(scene, -80, 2.4, Math.PI / 2, 0xd9ff3a, 0xffffff), x0: -110, x1: 100, z: 2.4, v: 1.25 },
+      { w: new WalkerC(scene, 30, 4.6, -Math.PI / 2, 0xff8c1a, 0x2f80ed), x0: -60, x1: 110, z: 4.6, v: -1.1 },
+      { w: new WalkerC(scene, -20, 3.2, Math.PI / 2, 0xd9ff3a, 0xffd21a), x0: -95, x1: 60, z: 3.2, v: 1.0 },
     ];
     this.ovenSmokeT = 0;
     this.gaugeT = 0;
@@ -256,8 +320,8 @@ export class Line {
     // cerca de carrocería
     for (const fz of [z + 4.2, z - 4.2]) for (let x = -44; x < 2; x += 2) { sb.box(2, 2.2, 0.02, M.fence, x + 1, 1.2, fz); sb.box(0.06, 2.3, 0.06, M.fencePost, x, 1.15, fz); }
     // pórtico de geometría (framing) en estación 2 y 3
-    for (const sx of [slotX(2) - 2, slotX(2) + 2, slotX(3) - 2, slotX(3) + 2]) { sb.box(0.35, 4.2, 0.35, M.steel, sx, 2.1, z - 3.4); sb.box(0.35, 4.2, 0.35, M.steel, sx, 2.1, z + 3.4); sb.box(0.35, 0.35, 7.2, M.steel, sx, 4.3, z); }
-    sb.box(4.4, 0.35, 0.35, M.steel, slotX(2), 4.3, z - 3.4); sb.box(4.4, 0.35, 0.35, M.steel, slotX(2), 4.3, z + 3.4);
+    if (!A.ok) for (const sx of [slotX(2) - 2, slotX(2) + 2, slotX(3) - 2, slotX(3) + 2]) { sb.box(0.35, 4.2, 0.35, M.steel, sx, 2.1, z - 3.4); sb.box(0.35, 4.2, 0.35, M.steel, sx, 2.1, z + 3.4); sb.box(0.35, 0.35, 7.2, M.steel, sx, 4.3, z); }
+    if (!A.ok) { sb.box(4.4, 0.35, 0.35, M.steel, slotX(2), 4.3, z - 3.4); sb.box(4.4, 0.35, 0.35, M.steel, slotX(2), 4.3, z + 3.4); }
     // grúa de alimentación
     const fxp = slotX(-1);
     for (const dz of [-2.2, 2.2]) sb.box(0.3, 6.6, 0.3, M.yellow, fxp, 3.3, z + dz);
@@ -313,6 +377,7 @@ export class Line {
       for (const s of [-1, 1]) {
         sb.cyl(0.01, 1.8, M.black, x + 0.8, 3.7, z + s * 1.7);
         sb.box(0.15, 0.25, 0.15, M.darkSteel, x + 0.8, 2.75, z + s * 1.7);
+        if (A.ok || (i === 19 && s < 0)) continue;
         sb.box(1.5, 0.9, 0.7, M.darkSteel, x - 1.4, 0.45, z + s * 3.1);
         for (let k = 0; k < 3; k++) sb.box(0.42, 0.25, 0.6, M.binBlue, x - 1.9 + k * 0.5, 1.03, z + s * 3.1);
       }

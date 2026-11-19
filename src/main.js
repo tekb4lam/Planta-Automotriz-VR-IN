@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 import { LOCATIONS, ZONES, PRESS, LINE, slotX } from './config.js';
-import { initMaterials } from './util.js';
+import { initMaterials, M } from './util.js';
 import { S, setZone, stopLine, lineRunning } from './state.js';
 import { buildWorld, drawZoneSign, updateAndons } from './world.js';
 import { Particles, Smoke, Markers, Beacons, Shields, Flashes } from './fx.js';
@@ -13,8 +13,11 @@ import { Audio } from './audio.js';
 import { ScenarioEngine, DEFS } from './scenarios.js';
 import { HUD } from './hud.js';
 import { Player } from './xr.js';
+import { loadAssets, A, pbr } from './assets.js';
+import { placeProps } from './props.js';
 
 initMaterials();
+(async () => {
 S.simSpeed = 1; S.ovenTarget = 180; S.attackFx = {}; S.dosStutter = false;
 
 // ---------- Renderer ----------
@@ -33,9 +36,28 @@ const scene = new THREE.Scene();
 scene.background = new THREE.Color(0xa7b2bb);
 scene.fog = new THREE.Fog(0xa7b2bb, 80, 280);
 const camera = new THREE.PerspectiveCamera(70, innerWidth / innerHeight, 0.05, 420);
-const pmrem = new THREE.PMREMGenerator(renderer);
-scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
-scene.environmentIntensity = 0.55;
+// ---------- Modelos y texturas (carpeta ./assets) ----------
+const loadingEl = document.getElementById('loading');
+try {
+  await loadAssets(renderer, (p) => { if (loadingEl) loadingEl.textContent = 'Cargando modelos 3D… ' + Math.round(p * 100) + '%'; });
+} catch (e) { console.warn(e); }
+if (loadingEl) loadingEl.textContent = 'Construyendo la planta…';
+await new Promise((r) => setTimeout(r, 30));
+if (A.env) { scene.environment = A.env; scene.environmentIntensity = 0.8; }
+else {
+  const pmrem = new THREE.PMREMGenerator(renderer);
+  scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+  scene.environmentIntensity = 0.55;
+}
+// materiales PBR (Poly Haven) donde existan
+const swap = (key, name, tile, extra) => { const m = pbr(name, tile, extra); if (m) M[key] = m; };
+swap('concrete', 'floor', 6, { color: new THREE.Color(1.55, 1.6, 1.65), metalness: 0.0, envMapIntensity: 0.6 });
+if (A.tex.wall_col) M.wallPBR = pbr('wall', 3, { color: new THREE.Color(1.15, 1.2, 1.25), metalness: 0.6 });
+swap('roof', 'roof', 3, { color: 0xb0b8c0, metalness: 0.5 });
+swap('pressBlue', 'press', 2.5, { metalness: 0.4 });
+swap('booth', 'panel', 2, { color: 0xffffff, metalness: 0.3 });
+swap('ovenPanel', 'panel', 2, { color: 0xc8ccd0, metalness: 0.5 });
+swap('plate', 'plate', 1.2, { metalness: 0.8 });
 const hemi = new THREE.HemisphereLight(0xeef4ff, 0x575757, 1.7);
 scene.add(hemi);
 const sun = new THREE.DirectionalLight(0xffffff, 1.1); sun.position.set(30, 60, 25); scene.add(sun);
@@ -43,6 +65,7 @@ const fill = new THREE.DirectionalLight(0xdfe9ff, 0.35); fill.position.set(-40, 
 
 // ---------- Mundo ----------
 const W = buildWorld(scene);
+placeProps(scene, W);
 const audio = new Audio();
 const fx = {
   sparks: new Particles(scene, 1600, { size: 0.05, gravity: -9.8, drag: 0.6 }),
@@ -213,5 +236,6 @@ renderer.setAnimationLoop(() => {
   renderer.render(scene, camera);
 });
 const advance = (sec) => { for (let t = 0; t < sec; t += 0.05) tick(0.05); return S.t; };
-window.__sim = { advance, S, engine, actions, player, line, agv, press, renderer, scene, camera, hud, LOCATIONS };
+window.__sim = { A, advance, S, engine, actions, player, line, agv, press, renderer, scene, camera, hud, LOCATIONS };
 document.getElementById('loading')?.remove();
+})();

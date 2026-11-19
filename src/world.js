@@ -12,8 +12,10 @@ export function buildWorld(scene) {
 
   // ---------- Piso ----------
   const fw = B.x1 - B.x0, fd = B.z1 - B.z0;
-  M.concrete.map.wrapS = M.concrete.map.wrapT = THREE.RepeatWrapping;
-  M.concrete.map.repeat.set(fw / 4, fd / 4);
+  for (const k of ['map', 'normalMap', 'roughnessMap', 'metalnessMap']) {
+    const t = M.concrete[k]; if (!t) continue;
+    t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(fw / (M.concrete.userData.tile || 4), fd / (M.concrete.userData.tile || 4));
+  }
   const floor = new THREE.Mesh(new THREE.PlaneGeometry(fw, fd), M.concrete);
   floor.rotation.x = -Math.PI / 2;
   floor.name = 'floor';
@@ -21,9 +23,16 @@ export function buildWorld(scene) {
 
   // ---------- Muros ----------
   const mkWall = (len, x, z, ry) => {
-    const tex = corrugatedTexture();
-    tex.wrapS = THREE.RepeatWrapping; tex.repeat.set(len / 2.5, 1);
-    const m = new THREE.Mesh(new THREE.PlaneGeometry(len, B.h), new THREE.MeshLambertMaterial({ map: tex }));
+    let mat;
+    if (M.wallPBR) {
+      mat = M.wallPBR.clone();
+      for (const k of ['map', 'normalMap', 'roughnessMap', 'metalnessMap']) if (mat[k]) { mat[k] = mat[k].clone(); mat[k].repeat.set(len / 3, B.h / 3); mat[k].needsUpdate = true; }
+    } else {
+      const tex = corrugatedTexture();
+      tex.wrapS = THREE.RepeatWrapping; tex.repeat.set(len / 2.5, 1);
+      mat = new THREE.MeshLambertMaterial({ map: tex });
+    }
+    const m = new THREE.Mesh(new THREE.PlaneGeometry(len, B.h), mat);
     m.position.set(x, B.h / 2, z); m.rotation.y = ry;
     root.add(m);
   };
@@ -44,6 +53,7 @@ export function buildWorld(scene) {
   sb.box(0.3, 0.4, 4.2, M.yellow, B.x0 + 0.4, 4.2, (WALK.z0 + WALK.z1) / 2);
 
   // ---------- Techo, armaduras, luminarias ----------
+  if (M.roof.map && M.roof.userData.tile) for (const k of ['map', 'normalMap', 'roughnessMap', 'metalnessMap']) if (M.roof[k]) M.roof[k].repeat.set(fw / 3, fd / 3);
   const roof = new THREE.Mesh(new THREE.PlaneGeometry(fw, fd), M.roof);
   roof.rotation.x = Math.PI / 2; roof.position.y = B.h;
   root.add(roof);
@@ -100,7 +110,7 @@ export function buildWorld(scene) {
 
   // ---------- Plataforma de observación ----------
   const P = PLATFORM;
-  sb.box(P.x1 - P.x0, 0.2, P.z1 - P.z0, M.steel, (P.x0 + P.x1) / 2, P.y - 0.1, (P.z0 + P.z1) / 2);
+  sb.box(P.x1 - P.x0, 0.2, P.z1 - P.z0, M.plate, (P.x0 + P.x1) / 2, P.y - 0.1, (P.z0 + P.z1) / 2);
   for (const [x, z] of [[P.x0 + 0.3, P.z0 + 0.3], [P.x1 - 0.3, P.z0 + 0.3], [P.x0 + 0.3, P.z1 - 0.3], [P.x1 - 0.3, P.z1 - 0.3]]) sb.box(0.3, P.y, 0.3, M.column, x, P.y / 2, z);
   const rail = (x0, z0, x1, z1) => {
     const len = Math.hypot(x1 - x0, z1 - z0), a = Math.atan2(z1 - z0, x1 - x0);
@@ -113,7 +123,7 @@ export function buildWorld(scene) {
   const steps = 30;
   for (let i = 0; i < steps; i++) {
     const t = i / steps;
-    sb.box(0.5, 0.06, 1.4, M.steel, P.x1 + 0.3 + t * 13, P.y * (1 - t) - 0.03, P.z1 - 0.8);
+    sb.box(0.5, 0.06, 1.4, M.plate, P.x1 + 0.3 + t * 13, P.y * (1 - t) - 0.03, P.z1 - 0.8);
   }
   sb.add(G.box, M.yellow, P.x1 + 6.8, P.y / 2 + 1, P.z1 - 1.55, 0, 0, -Math.atan2(P.y, 13), 15.8, 0.06, 0.06);
   sb.add(G.box, M.steel, P.x1 + 6.8, P.y / 2 - 0.2, P.z1 - 0.8, 0, 0, -Math.atan2(P.y, 13), 15.8, 0.25, 1.5);

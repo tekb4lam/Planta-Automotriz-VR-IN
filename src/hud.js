@@ -142,6 +142,9 @@ export class HUD {
     });
     ctx.fillStyle = COL.mute; ctx.font = `500 18px ${FONT}`; ctx.textAlign = 'left';
     ctx.fillText(`Costo de paro supuesto: USD ${fmt(COST_PER_MIN_USD)}/min · Producción nominal ${JPH} unidades/h (editable en el código).`, 20, H - 22, W - 40);
+    ctx.font = `500 15px ${FONT}`; ctx.fillStyle = '#6f8ba0';
+    ctx.fillText('Créditos: robots KUKA KR 210 y ABB IRB 5400 (ROS-Industrial, BSD/Apache-2.0) · "Car Concept" de Eric Chadwick (Khronos, CC BY 4.0)', 20, H - 70, W - 40);
+    ctx.fillText('Operario: personaje Mixamo (ejemplos de three.js) · Texturas, HDRI y utilería: Poly Haven (CC0) · Uso no comercial', 20, H - 50, W - 40);
   }
   tabScenario(ctx, W, H, y0) {
     const d = S.scenario, eng = this.actions.engine;

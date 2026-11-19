@@ -18,6 +18,11 @@ export class Batcher {
   constructor() { this.map = new Map(); }
   add(geo, mat, x = 0, y = 0, z = 0, rx = 0, ry = 0, rz = 0, sx = 1, sy = 1, sz = 1) {
     const g = geo.clone();
+    if (geo === G.box && g.attributes.uv) {
+      // UV en metros: cada cara recibe las dimensiones reales de la caja (texturas sin estirar)
+      const uv = g.attributes.uv, dims = [[sz, sy], [sz, sy], [sx, sz], [sx, sz], [sx, sy], [sx, sy]];
+      for (let f = 0; f < 6; f++) for (let k = 0; k < 4; k++) { const i = f * 4 + k; uv.setXY(i, uv.getX(i) * dims[f][0], uv.getY(i) * dims[f][1]); }
+    }
     _q.setFromEuler(_e.set(rx, ry, rz));
     _m.compose(_v.set(x, y, z), _q, _s.set(sx, sy, sz));
     g.applyMatrix4(_m);
@@ -306,6 +311,7 @@ export function initMaterials() {
     serverRack: std(0x15181c, 0.4, 0.5),
     fw: std(0xb3121f, 0.3, 0.45),
     vc: std(0xffffff, 0.3, 0.5, { vertexColors: true }),
+    plate: std(0x8a9299, 0.7, 0.45),
     vcMatte: std(0xffffff, 0.0, 0.85, { vertexColors: true }),
   });
 }
