@@ -1,0 +1,17 @@
+{
+  "name": "planta-automotriz-vr-in",
+  "version": "1.0.0",
+  "description": "Planta Automotriz VR IN \u00b7 Simulador WebXR de riesgos OT para Meta Quest 3",
+  "scripts": {
+    "build": "node build.mjs"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "esbuild": "^0.28.2",
+    "iwer": "^2.8.0",
+    "three": "^0.170.0"
+  },
+  "private": true
+}
