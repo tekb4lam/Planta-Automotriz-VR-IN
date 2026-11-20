@@ -15,7 +15,7 @@ import { HUD } from './hud.js';
 import { Player } from './xr.js';
 import { loadAssets, A, pbr } from './assets.js';
 import { placeProps } from './props.js';
-import { RealWorker } from './people.js';
+import { RealWorker, makePerson } from './people.js';
 
 initMaterials();
 (async () => {
@@ -70,7 +70,8 @@ placeProps(scene, W);
 // personal de oficinas y sala de control
 const staff = [];
 if (A.worker) for (const p of W.people) {
-  const w = new RealWorker(scene, p.x, p.z, p.yaw, null, null, { outfit: p.outfit, seated: p.seated, headset: p.headset });
+  const role = p.outfit === 'operator' ? (p.seated ? 'sala' : 'supervisor') : 'oficina';
+  const w = makePerson(scene, role, p.x, p.z, p.yaw, { outfit: p.outfit, seated: p.seated, headset: p.headset });
   w.root.position.y += p.y || 0;
   staff.push(w);
 }

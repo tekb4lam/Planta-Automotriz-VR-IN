@@ -12,6 +12,9 @@ const MODELS = {
   shelves: 'steel_frame_shelves_01.glb', toolCart: 'tool_cart.glb', box: 'cardboard_box_01.glb', barrel: 'barrel_01.glb',
   wetSign: 'wetfloorsign_01.glb', cam: 'security_camera_01.glb', ubox: 'utility_box_01.glb', weldCart: 'portable_welding_cart.glb',
 };
+// Personajes por rol (Meshy AI u otro rig Mixamo). Si un archivo no existe se usa el personaje de respaldo.
+export const ROLE_FILES = { linea: 'rol_linea.glb', mantenimiento: 'rol_mantenimiento.glb', calidad: 'rol_calidad.glb', sala: 'rol_sala_control.glb', oficina: 'rol_oficina.glb', supervisor: 'rol_supervisor.glb' };
+const ROLE_FALLBACK = { mantenimiento: 'linea' };
 const TEX = ['floor', 'wall', 'roof', 'press', 'plate', 'panel'];
 
 export async function loadAssets(renderer, onProgress) {
@@ -28,12 +31,15 @@ export async function loadAssets(renderer, onProgress) {
       A.tex[n + '_' + s] = t;
     }).catch(() => {}));
   }
+  A.roles = {};
+  for (const [role, f] of Object.entries(ROLE_FILES)) jobs.push(gl.loadAsync(BASE + 'models/' + f).then((g) => (A.roles[role] = g)).catch(() => {}));
   for (const j of ['robot_paths', 'kr210', 'irb5400']) jobs.push(fetch(BASE + 'models/' + j + '.json').then((r) => r.json()).then((d) => (A[j + 'Info'] = d)).catch(() => {}));
   jobs.push(new RGBELoader(mgr).loadAsync(BASE + 'textures/env.hdr').then((h) => {
     const pm = new THREE.PMREMGenerator(renderer);
     A.env = pm.fromEquirectangular(h).texture; h.dispose(); pm.dispose();
   }).catch(() => {}));
   await Promise.all(jobs);
+  for (const [r, fb] of Object.entries(ROLE_FALLBACK)) if (!A.roles[r] && A.roles[fb]) A.roles[r] = A.roles[fb];
   A.ok = !!(A.kr210 && A.irb5400 && A.carHi && A.robot_pathsInfo && A.kr210Info);
   if (A.carHi) A.car = { hi: buildCarParts(A.carHi.scene), lo: A.carLo ? buildCarParts(A.carLo.scene) : null };
   return A;

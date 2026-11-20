@@ -8,6 +8,7 @@ Uso **no comercial** (concientización en ciberseguridad OT). Todos los recursos
 | KUKA KR 210 L150 (`assets/models/kr210.glb`) | Robots de soldadura de punto y manipulación | ROS-Industrial `kuka_experimental` – https://github.com/ros-industrial/kuka_experimental | BSD |
 | ABB IRB 5400 (`assets/models/irb5400.glb`) | Robots de pintura | ROS-Industrial `abb` – https://github.com/ros-industrial/abb | Apache-2.0 |
 | Car Concept (`car_hi.glb`, `car_lo.glb`) | Carrocerías en todas las etapas | Eric Chadwick, Khronos glTF Sample Assets – https://github.com/KhronosGroup/glTF-Sample-Assets/tree/main/Models/CarConcept (basado en un modelo CC0 de "Unity Fan") | CC BY 4.0 |
+| Operario "Paco" (`rol_linea.glb`) | Operarios de ensamble y personal que camina por los pasillos | Generado por Michel Loranca con Meshy AI | Propio |
 | Personaje con esqueleto (`worker.glb`) | Operarios (casco y chaleco añadidos por código) | Personaje Mixamo de los ejemplos de three.js – https://github.com/mrdoob/three.js/tree/dev/examples/models/gltf | Términos de Mixamo (Adobe) |
 | Texturas PBR: concreto de hangar, lámina perfilada, lámina corrugada, placa azul, placa antiderrapante, panel metálico | Piso, muros, techo, prensas, plataforma, cabina y horno | Poly Haven – https://polyhaven.com/textures | CC0 |
 | HDRI `empty_warehouse_01` | Iluminación y reflejos | Poly Haven – https://polyhaven.com/a/empty_warehouse_01 | CC0 |
@@ -39,3 +40,17 @@ Sí sirven. Recomendaciones para que se integren sin retrabajo:
   (p. ej. marco de prensa y carro/slide). Si viene en una sola malla, se puede cortar por planos, pero queda mejor separada.
 - **Mobiliario y equipo estático (escritorios, racks, consolas):** una sola malla está bien.
 - **Tamaño:** cualquier resolución; aquí se simplifica a ~5–25 mil triángulos y texturas de 512–1024 px con `optimize.mjs`.
+
+### Archivos por rol (se cargan solos si existen en `assets/models/`)
+
+| Archivo | Rol | Si no existe se usa |
+|---|---|---|
+| `rol_linea.glb` | Operarios de ensamble y pasillos | personaje de respaldo con overol pintado |
+| `rol_mantenimiento.glb` | Técnicos que caminan por la nave | `rol_linea.glb` |
+| `rol_calidad.glb` | Inspectores de calidad | respaldo con polo |
+| `rol_sala_control.glb` | Operadores sentados en sala de control | respaldo con polo y diadema |
+| `rol_supervisor.glb` | Supervisor de pie en sala de control | respaldo con camisa |
+| `rol_oficina.glb` | Personal de TI (incluida la víctima del phishing) | respaldo con camisa |
+
+Animaciones que se aprovechan si vienen en el GLB: *Walking*, *Running*, *Idle* y *Typing/Sitting*. Las poses de trabajo,
+sentado y alarma se generan por código para cualquier esqueleto Mixamo.

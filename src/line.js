@@ -4,7 +4,7 @@ import { Batcher, G, M, P, mergeColored, mergeParts, slab, CanvasPanel, rand, da
 import { S, lineRunning } from './state.js';
 import { A } from './assets.js';
 import { RealRobot } from './robots.js';
-import { RealWorker } from './people.js';
+import { RealWorker, makePerson } from './people.js';
 
 const C = { robot: 0xff6a00, dark: 0x2b2f33, white: 0xececec, gray: 0x707880, copper: 0xb87333 };
 const HOME = [0, -0.05, 0.55, -1.3];
@@ -286,17 +286,17 @@ export class Line {
     const Worker = A.worker ? RealWorker : WorkerP;
     const vests = [0xff8c1a, 0xd9ff3a];
     for (let i = 16; i <= 21; i++) {
-      if (i !== 17) this.workers.push({ w: new Worker(scene, slotX(i) + rand(-0.8, 0.8), LINE.z + 2.0, Math.PI, A.worker ? null : vests[i % 2], 0xffffff, { outfit: 'coverall' }), slot: i });
-      if (i !== 19 && i !== 17) this.workers.push({ w: new Worker(scene, slotX(i) + rand(-0.8, 0.8), LINE.z - 2.0, 0, A.worker ? null : vests[(i + 1) % 2], 0xffd21a, { outfit: 'coverall' }), slot: i });
+      if (i !== 17) this.workers.push({ w: (A.worker ? makePerson(scene, 'linea', slotX(i) + rand(-0.8, 0.8), LINE.z + 2.0, Math.PI, { helmet: 0xffffff, outfit: 'coverall' }) : new Worker(scene, slotX(i), LINE.z + 2.0, Math.PI, vests[i % 2], 0xffffff)), slot: i });
+      if (i !== 19 && i !== 17) this.workers.push({ w: (A.worker ? makePerson(scene, 'linea', slotX(i) + rand(-0.8, 0.8), LINE.z - 2.0, 0, { helmet: 0xffd21a, outfit: 'coverall' }) : new Worker(scene, slotX(i), LINE.z - 2.0, 0, vests[(i + 1) % 2], 0xffd21a)), slot: i });
     }
-    this.workers.push({ w: new Worker(scene, slotX(23) + 0.5, LINE.z + 2.1, Math.PI, A.worker ? null : 0x2f80ed, 0xffffff, { outfit: 'operator' }), slot: 23 });
-    this.workers.push({ w: new Worker(scene, slotX(22) - 2.8, LINE.z + 2.2, Math.PI * 0.75, A.worker ? null : 0x2f80ed, 0xffffff, { outfit: 'operator' }), slot: 22 });
+    this.workers.push({ w: (A.worker ? makePerson(scene, 'calidad', slotX(23) + 0.5, LINE.z + 2.1, Math.PI, { helmet: 0xffffff, outfit: 'operator' }) : new Worker(scene, slotX(23) + 0.5, LINE.z + 2.1, Math.PI, 0x2f80ed, 0xffffff)), slot: 23 });
+    this.workers.push({ w: (A.worker ? makePerson(scene, 'calidad', slotX(22) - 2.8, LINE.z + 2.2, Math.PI * 0.75, { helmet: 0xffffff, outfit: 'operator' }) : new Worker(scene, slotX(22) - 2.8, LINE.z + 2.2, Math.PI * 0.75, 0x2f80ed, 0xffffff)), slot: 22 });
     // peatones en pasillo
     const WalkerC = A.worker ? RealWorker : WorkerP;
     this.walkers = [
-      { w: new WalkerC(scene, -80, 2.4, Math.PI / 2, 0xd9ff3a, 0xffffff, { outfit: 'maint' }), x0: -110, x1: 100, z: 2.4, v: 1.25 },
-      { w: new WalkerC(scene, 30, 4.6, -Math.PI / 2, 0xff8c1a, 0x2f80ed, { outfit: 'coverall' }), x0: -60, x1: 110, z: 4.6, v: -1.1 },
-      { w: new WalkerC(scene, -20, 3.2, Math.PI / 2, 0xd9ff3a, 0xffd21a, { outfit: 'maint' }), x0: -95, x1: 60, z: 3.2, v: 1.0 },
+      { w: (A.worker ? makePerson(scene, 'mantenimiento', -80, 2.4, Math.PI / 2, { vest: 0xd9ff3a, helmet: 0xffffff, outfit: 'maint' }) : new WalkerC(scene, -80, 2.4, Math.PI / 2, 0xd9ff3a, 0xffffff)), x0: -110, x1: 100, z: 2.4, v: 1.25 },
+      { w: (A.worker ? makePerson(scene, 'linea', 30, 4.6, -Math.PI / 2, { vest: 0xff8c1a, helmet: 0x2f80ed, outfit: 'coverall' }) : new WalkerC(scene, 30, 4.6, -Math.PI / 2, 0xff8c1a, 0x2f80ed)), x0: -60, x1: 110, z: 4.6, v: -1.1 },
+      { w: (A.worker ? makePerson(scene, 'mantenimiento', -20, 3.2, Math.PI / 2, { vest: 0xd9ff3a, helmet: 0xffd21a, outfit: 'maint' }) : new WalkerC(scene, -20, 3.2, Math.PI / 2, 0xd9ff3a, 0xffd21a)), x0: -95, x1: 60, z: 3.2, v: 1.0 },
     ];
     this.ovenSmokeT = 0;
     this.gaugeT = 0;

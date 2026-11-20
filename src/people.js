@@ -199,3 +199,114 @@ export class RealWorker {
     b.quaternion.multiply(_q);
   }
 }
+
+// ================= Personajes generados con Meshy AI (textura propia, rig Mixamo) =================
+// Las poses se definen por DIRECCIONES en el espacio del personaje (independientes de los ejes de cada rig),
+// así que cualquier personaje con nombres mixamorig* funciona sin recalibrar.
+const _v1 = new THREE.Vector3(), _v2 = new THREE.Vector3(), _qa = new THREE.Quaternion(), _qb = new THREE.Quaternion(), _qp = new THREE.Quaternion();
+function aim(bone, child, dirWorld, w = 1) {
+  if (!bone || !child) return;
+  bone.updateWorldMatrix(true, false); child.updateWorldMatrix(false, false);
+  bone.getWorldPosition(_v1); child.getWorldPosition(_v2);
+  _v2.sub(_v1).normalize();
+  _qa.setFromUnitVectors(_v2, dirWorld);
+  if (w < 1) _qa.slerp(_qb.identity(), 1 - w);
+  bone.getWorldQuaternion(_qb);
+  _qb.premultiply(_qa);
+  bone.parent.getWorldQuaternion(_qp).invert();
+  bone.quaternion.copy(_qp.multiply(_qb));
+}
+// poses: [hueso, hijo, dirección local (x = izquierda del personaje, y = arriba, z = al frente)]
+const L = 1, R = -1;
+const POSES = {
+  idle: (t, f) => [
+    ['LeftArm', 'LeftForeArm', [0.2, -1, 0.04]], ['RightArm', 'RightForeArm', [-0.2, -1, 0.04]],
+    ['LeftForeArm', 'LeftHand', [0.08, -1, 0.18]], ['RightForeArm', 'RightHand', [-0.08, -1, 0.18]],
+  ],
+  work: (t, f) => {
+    const a = Math.sin(2.6 * t + f), b = Math.sin(2.6 * t + f + 1.7);
+    return [
+      ['LeftArm', 'LeftForeArm', [0.25, -0.75, 0.55 + 0.1 * a]], ['RightArm', 'RightForeArm', [-0.25, -0.75, 0.55 + 0.1 * b]],
+      ['LeftForeArm', 'LeftHand', [-0.25 + 0.15 * b, -0.15, 1]], ['RightForeArm', 'RightHand', [0.25 + 0.15 * a, -0.15, 1]],
+      ['Spine1', 'Spine2', [0, 1, 0.12]],
+    ];
+  },
+  alarm: (t) => [
+    ['LeftArm', 'LeftForeArm', [0.2, -1, 0.04]], ['LeftForeArm', 'LeftHand', [0.08, -1, 0.18]],
+    ['RightArm', 'RightForeArm', [-0.45, 0.85, 0.1]], ['RightForeArm', 'RightHand', [-0.25 + 0.35 * Math.sin(8 * t), 1, 0.1]],
+  ],
+  seated: (t, f, typing) => {
+    const k = typing ? 0.04 * Math.sin(9 * t + f) : 0;
+    return [
+      ['LeftUpLeg', 'LeftLeg', [0.06, -0.08, 1]], ['RightUpLeg', 'RightLeg', [-0.06, -0.08, 1]],
+      ['LeftLeg', 'LeftFoot', [0.02, -1, 0.12]], ['RightLeg', 'RightFoot', [-0.02, -1, 0.12]],
+      ['LeftArm', 'LeftForeArm', [0.22, -0.85, 0.42]], ['RightArm', 'RightForeArm', [-0.22, -0.85, 0.42]],
+      ['LeftForeArm', 'LeftHand', [-0.15, -0.2 + k, 1]], ['RightForeArm', 'RightHand', [0.15, -0.2 - k, 1]],
+    ];
+  },
+};
+const _d = new THREE.Vector3(), _rq = new THREE.Quaternion();
+export class MeshyWorker {
+  constructor(scene, x, z, yaw, gltf, opts = {}) {
+    this.root = new THREE.Group(); this.root.position.set(x, 0, z); this.root.rotation.y = yaw; this.yaw = yaw;
+    const m = skClone(gltf.scene);
+    m.traverse((o) => { if (o.isSkinnedMesh) { o.frustumCulled = false; if (o.material) o.material.envMapIntensity = 0.6; } });
+    this.root.add(m); this.model = m;
+    this.bones = {};
+    m.traverse((o) => { if (o.isBone) this.bones[o.name.replace('mixamorig', '')] = o; });
+    this.rest = {};
+    for (const k in this.bones) this.rest[k] = this.bones[k].quaternion.clone();
+    this.mixer = new THREE.AnimationMixer(m);
+    const walk = gltf.animations.find((a) => /walk/i.test(a.name)), run = gltf.animations.find((a) => /run/i.test(a.name));
+    this.walk = walk && this.mixer.clipAction(walk);
+    this.run = run && this.mixer.clipAction(run);
+    // si el modelo trae animaciones de reposo o de estar sentado tecleando, se usan en lugar de las poses
+    const idle = gltf.animations.find((a) => /idle|stand|breath/i.test(a.name)), sit = gltf.animations.find((a) => /typ|sit/i.test(a.name));
+    this.idleA = idle && this.mixer.clipAction(idle);
+    this.sitA = sit && this.mixer.clipAction(sit);
+    this.seated = !!opts.seated;
+    this.phi = rand(0, 6.28);
+    m.updateMatrixWorld(true);
+    // altura de cadera para sentarse en una silla de 0.47 m
+    const hip = this.bones.Hips, knee = this.bones.LeftLeg;
+    if (this.seated && hip && knee) { hip.getWorldPosition(_v1); knee.getWorldPosition(_v2); this.root.position.y = 0.5 - (_v1.y - this.root.position.y) + 0.0; this.seatDrop = true; }
+    this.mode = null;
+    scene.add(this.root);
+  }
+  setMode(mode) {
+    if (mode === this.mode) return;
+    this.mode = mode;
+    for (const a of [this.walk, this.run, this.idleA, this.sitA]) if (a) a.stop();
+    const a = { walk: this.walk, run: this.run || this.walk, clipIdle: this.idleA, clipSit: this.sitA }[mode];
+    if (a) a.reset().play();
+    else for (const k in this.bones) this.bones[k].quaternion.copy(this.rest[k]);
+  }
+  update(dt, t, mode) {
+    if (this.seated) mode = mode === 'alarm' ? 'seatedAlarm' : 'seated';
+    const clip = mode === 'walk' || mode === 'run' ? mode : (mode === 'idle' && this.idleA) ? 'clipIdle' : (mode === 'seated' && this.sitA) ? 'clipSit' : 'pose';
+    this.setMode(clip);
+    if (clip !== 'pose') { this.mixer.update(dt); return; }
+    for (const k in this.bones) this.bones[k].quaternion.copy(this.rest[k]);
+    // respiración leve
+    if (this.bones.Spine) this.bones.Spine.quaternion.multiply(_rq.setFromAxisAngle(_d.set(1, 0, 0), 0.015 * Math.sin(1.6 * t + this.phi)));
+    let list;
+    if (mode === 'seated' || mode === 'seatedAlarm') {
+      list = POSES.seated(t, this.phi, mode === 'seated');
+      if (mode === 'seatedAlarm') list = list.filter((p) => !/^Right(Arm|ForeArm)/.test(p[0])).concat(POSES.alarm(t).filter((p) => /^Right/.test(p[0])));
+    } else list = (POSES[mode] || POSES.idle)(t, this.phi);
+    this.root.updateMatrixWorld(true);
+    this.root.getWorldQuaternion(_rq);
+    for (const [b, c, d] of list) {
+      _d.set(d[0], d[1], d[2]).normalize().applyQuaternion(_rq);
+      aim(this.bones[b], this.bones[c], _d.clone());
+    }
+    if (mode === 'idle' && !this.seated) this.root.rotation.y = this.yaw + 0.12 * Math.sin(0.4 * t + this.phi);
+  }
+}
+
+// Crea una persona para un rol: modelo de Meshy si existe, si no el personaje de respaldo con uniforme pintado.
+export function makePerson(scene, role, x, z, yaw, fallback = {}) {
+  const g = A.roles && A.roles[role];
+  if (g) return new MeshyWorker(scene, x, z, yaw, g, { seated: fallback.seated });
+  return new RealWorker(scene, x, z, yaw, fallback.vest ?? null, fallback.helmet ?? null, fallback);
+}
