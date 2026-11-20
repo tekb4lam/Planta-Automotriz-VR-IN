@@ -27,3 +27,15 @@ Las cinemáticas de los robots se calcularon con `tools/ik.py` a partir de los U
 - **Más robots con ejes separados (URDF):** https://github.com/ros-industrial/fanuc (p. ej. R-2000iC), https://github.com/ros-industrial/abb (IRB 6640)
 
 Para optimizar un modelo nuevo: `node optimize.mjs entrada.glb assets/models/salida.glb 0.3 '{"tex":512}'`.
+
+## Usar modelos creados con Meshy AI
+
+Sí sirven. Recomendaciones para que se integren sin retrabajo:
+
+- **Personas (operadores, ingenieros, operarios):** genera el personaje en pose T o A, texturizado, y usa el
+  auto-rig de Meshy. Al descargar, elige **GLB** con la plantilla de esqueleto **Mixamo**: el código ya anima los huesos
+  `mixamorig*` (caminar, estar de pie, sentado tecleando, alarma). Incluye, si puedes, las animaciones *Idle*, *Walking* y *Typing/Sitting*.
+- **Máquinas con partes móviles (prensas, robots, puertas):** genera **cada pieza móvil por separado**
+  (p. ej. marco de prensa y carro/slide). Si viene en una sola malla, se puede cortar por planos, pero queda mejor separada.
+- **Mobiliario y equipo estático (escritorios, racks, consolas):** una sola malla está bien.
+- **Tamaño:** cualquier resolución; aquí se simplifica a ~5–25 mil triángulos y texturas de 512–1024 px con `optimize.mjs`.

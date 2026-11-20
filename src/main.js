@@ -15,6 +15,7 @@ import { HUD } from './hud.js';
 import { Player } from './xr.js';
 import { loadAssets, A, pbr } from './assets.js';
 import { placeProps } from './props.js';
+import { RealWorker } from './people.js';
 
 initMaterials();
 (async () => {
@@ -66,6 +67,13 @@ const fill = new THREE.DirectionalLight(0xdfe9ff, 0.35); fill.position.set(-40, 
 // ---------- Mundo ----------
 const W = buildWorld(scene);
 placeProps(scene, W);
+// personal de oficinas y sala de control
+const staff = [];
+if (A.worker) for (const p of W.people) {
+  const w = new RealWorker(scene, p.x, p.z, p.yaw, null, null, { outfit: p.outfit, seated: p.seated, headset: p.headset });
+  w.root.position.y += p.y || 0;
+  staff.push(w);
+}
 const audio = new Audio();
 const fx = {
   sparks: new Particles(scene, 1600, { size: 0.05, gravity: -9.8, drag: 0.6 }),
@@ -223,6 +231,8 @@ function tick(dt) {
   fx.sparks.update(dt); fx.mist.update(dt); fx.smoke.update(dt); fx.markers.update(dt); fx.shields.update(dt); fx.flashes.update(dt);
   beacons.update(dt);
   updateAndons(W, S.t);
+  for (const w of staff) w.update(dt, S.t, S.alarm ? 'alarm' : w.seated ? 'work' : 'idle');
+  if (W.rackLeds) W.rackLeds.forEach((m, i) => (m.emissiveIntensity = 1.2 + 0.6 * Math.sin(S.t * (4 + i * 1.7) + i) + (Math.random() < 0.05 ? 0.8 : 0)));
   // LEDs de servidores parpadeando
   if (W.leds) W.leds.forEach((m, i) => (m.emissiveIntensity = Math.sin(S.t * (7 + i * 3) + i) > 0 ? 2.2 : 0.4));
   hud.update(dt);

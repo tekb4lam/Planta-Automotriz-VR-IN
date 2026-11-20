@@ -2,9 +2,12 @@ import * as THREE from 'three';
 import { B, LINE, PRESS, WALK, AGVP, ROOMS, PLATFORM, slotX, ZONES } from './config.js';
 import { Batcher, G, M, CanvasPanel, makeSign, rand, emissiveMat, FONT, roundRect, corrugatedTexture } from './util.js';
 import { S } from './state.js';
+import { A } from './assets.js';
+import { buildControlRoom, buildITOffice, addRack } from './interiors.js';
 
 export function buildWorld(scene) {
-  const W = { nodes: {}, cabinets: {}, zoneSigns: {}, andons: {}, screens: {}, columns: [] };
+  const W = { nodes: {}, cabinets: {}, zoneSigns: {}, andons: {}, screens: {}, columns: [], people: [] };
+  const REAL = !!A.ok;
   const sb = new Batcher();
   const root = new THREE.Group();
   root.name = 'static';
@@ -136,30 +139,34 @@ export function buildWorld(scene) {
   // ---------- Oficinas IT ----------
   const O = ROOMS.office;
   roomShell(sb, O, { glassE: true, glassS: true, door: 'S', doorAt: -108 });
-  for (let r = 0; r < 2; r++) for (let c = 0; c < 3; c++) {
+  if (!REAL) for (let r = 0; r < 2; r++) for (let c = 0; c < 3; c++) {
     const x = -116 + c * 3.2, z = -45 + r * 4;
     sb.box(1.6, 0.05, 0.8, M.deskTop, x, 0.75, z); sb.box(1.5, 0.72, 0.05, M.desk, x, 0.37, z - 0.35);
     sb.box(0.55, 0.35, 0.03, M.screenOff, x, 1.0, z - 0.25);
     sb.box(0.5, 0.5, 0.5, M.chair, x, 0.45, z + 0.65);
   }
   // laptop víctima de phishing
-  sb.box(1.6, 0.05, 0.8, M.deskTop, -110, 0.75, -40.2); sb.box(1.5, 0.72, 0.05, M.desk, -110, 0.37, -40.55);
-  sb.box(0.42, 0.02, 0.3, M.darkSteel, -110, 0.785, -40.05);
+  if (!REAL) { sb.box(1.6, 0.05, 0.8, M.deskTop, -110, 0.75, -40.2); sb.box(1.5, 0.72, 0.05, M.desk, -110, 0.37, -40.55);
+  sb.box(0.42, 0.02, 0.3, M.darkSteel, -110, 0.785, -40.05); }
   const lap = new CanvasPanel(512, 320, 0.4);
   lap.mesh.position.set(-110, 0.92, -40.22); lap.mesh.rotation.x = -0.25;
   root.add(lap.mesh);
   W.screens.laptop = lap;
   // racks de servidores IT
-  for (let i = 0; i < 3; i++) serverRack(sb, root, -118.2, -47.5 + i * 0.9, Math.PI / 2, W);
   W.nodes.laptop = new THREE.Vector3(-110, 1.0, -40);
+  if (REAL) buildITOffice(root, W, lap, W.people);
+  else for (let i = 0; i < 3; i++) serverRack(sb, root, -118.2, -47.5 + i * 0.9, Math.PI / 2, W);
   W.nodes.itsrv = new THREE.Vector3(-117.8, 2.1, -46.6);
   const itSign = makeSign(['RED CORPORATIVA (IT)', 'Correo · ERP · Usuarios'], 4.5, { bg: '#1d3557', stripe: '#4cc9f0' });
   itSign.position.set(-112, 3.6, -34.9); root.add(itSign);
 
   // ---------- Firewall IT/OT (DMZ) ----------
-  sb.box(0.7, 2.0, 0.8, M.serverRack, -107, 1.0, -33);
-  sb.box(0.6, 0.18, 0.7, M.fw, -107, 1.6, -32.95);
-  sb.box(0.6, 0.18, 0.7, M.darkSteel, -107, 1.3, -32.95);
+  if (REAL) addRack(root, W, -107, -33.2, 0, 'fw');
+  else {
+    sb.box(0.7, 2.0, 0.8, M.serverRack, -107, 1.0, -33);
+    sb.box(0.6, 0.18, 0.7, M.fw, -107, 1.6, -32.95);
+    sb.box(0.6, 0.18, 0.7, M.darkSteel, -107, 1.3, -32.95);
+  }
   W.nodes.fw = new THREE.Vector3(-107, 1.8, -33);
   const fwSign = makeSign(['FIREWALL IT/OT', 'DMZ industrial (Nivel 3.5)'], 2.6, { bg: '#7a0d16', stripe: '#ffd166' });
   fwSign.position.set(-107, 2.6, -32.55); root.add(fwSign);
@@ -174,10 +181,11 @@ export function buildWorld(scene) {
   vw.left.mesh.position.set(C.x0 + 0.25, 1.95, -28.2);
   vw.right.mesh.position.set(C.x0 + 0.25, 1.95, -17.8);
   for (const k in vw) { vw[k].mesh.rotation.y = Math.PI / 2; root.add(vw[k].mesh); }
-  sb.box(0.1, 3.0, 15.4, M.black, C.x0 + 0.12, 1.95, -23);
+  if (!REAL) sb.box(0.1, 3.0, 15.4, M.black, C.x0 + 0.12, 1.95, -23);
   W.screens.scada = vw.center; W.screens.net = vw.left; W.screens.kpiCtrl = vw.right;
+  if (REAL) buildControlRoom(root, W, vw, W.people);
   // consolas de operador
-  for (const x of [-114, -110.8]) {
+  if (!REAL) for (const x of [-114, -110.8]) {
     for (let z = -28; z <= -18; z += 3.4) {
       sb.box(1.0, 0.05, 2.6, M.deskTop, x, 0.76, z); sb.box(0.9, 0.72, 2.5, M.desk, x + 0.05, 0.38, z);
       for (const dz of [-0.8, 0, 0.8]) {
@@ -188,11 +196,12 @@ export function buildWorld(scene) {
       sb.box(0.55, 0.5, 0.55, M.chair, x + 0.75, 0.45, z);
     }
   }
-  seatedOperator(root, -113.25, -24.6); seatedOperator(root, -110.05, -21.2);
-  // servidores SCADA/MES y estación de ingeniería
-  serverRack(sb, root, -105.9, -16.2, -Math.PI / 2, W);
-  serverRack(sb, root, -105.9, -17.1, -Math.PI / 2, W);
-  sb.box(1.2, 0.05, 0.7, M.deskTop, -106.4, 0.76, -27.5); sb.box(0.5, 0.33, 0.03, M.screenOff, -106.4, 1.0, -27.8);
+  if (!REAL) {
+    seatedOperator(root, -113.25, -24.6); seatedOperator(root, -110.05, -21.2);
+    serverRack(sb, root, -105.9, -16.2, -Math.PI / 2, W);
+    serverRack(sb, root, -105.9, -17.1, -Math.PI / 2, W);
+    sb.box(1.2, 0.05, 0.7, M.deskTop, -106.4, 0.76, -27.5); sb.box(0.5, 0.33, 0.03, M.screenOff, -106.4, 1.0, -27.8);
+  }
   W.nodes.scada = new THREE.Vector3(-106, 2.1, -16.6);
   W.nodes.hmi = new THREE.Vector3(-112.5, 1.2, -23);
   W.nodes.agvsrv = new THREE.Vector3(-106.4, 1.1, -27.5);
