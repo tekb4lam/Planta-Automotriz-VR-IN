@@ -21,7 +21,7 @@ export const ROLE_FILES = {
 // Si falta un rol se usa otro (p. ej. sin rol_linea.glb los operarios de línea usan a Paco de mantenimiento).
 const ROLE_FALLBACK = { linea: 'mantenimiento', mantenimiento: 'linea', supervisor: 'calidad', oficina: 'supervisor' };
 // Equipos generados con Meshy AI (malla única texturizada). Si falta alguno se usa la versión procedural.
-const MACHINES = { prensa: 'prensa.glb', agv: 'agv.glb', montacargas: 'montacargas.glb', rack: 'rack_servidores.glb', tablero: 'tablero_plc.glb' };
+const MACHINES = { agv: 'agv.glb', montacargas: 'montacargas.glb', rack: 'rack_servidores.glb', tablero: 'tablero_plc.glb' };
 const TEX = ['floor', 'wall', 'roof', 'press', 'plate', 'panel'];
 
 export async function loadAssets(renderer, onProgress) {

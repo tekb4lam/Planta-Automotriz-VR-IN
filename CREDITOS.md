@@ -10,7 +10,7 @@ Uso **no comercial** (concientización en ciberseguridad OT). Todos los recursos
 | Car Concept (`car_hi.glb`, `car_lo.glb`) | Carrocerías en todas las etapas | Eric Chadwick, Khronos glTF Sample Assets – https://github.com/KhronosGroup/glTF-Sample-Assets/tree/main/Models/CarConcept (basado en un modelo CC0 de "Unity Fan") | CC BY 4.0 |
 | Operario "Paco" (`rol_mantenimiento.glb`) | Técnicos de mantenimiento (y operarios de línea mientras no exista `rol_linea.glb`) | Generado por Michel Loranca con Meshy AI | Propio |
 | Personajes `rol_calidad.glb`, `rol_supervisor.glb`, `rol_oficina.glb`, `rol_sala_control_1.glb`, `rol_sala_control_2.glb` | Inspectores, supervisor, personal de TI y operadores de sala de control | Generados por Michel Loranca con Meshy AI | Propio |
-| Equipos `prensa.glb`, `montacargas.glb`, `agv.glb`, `rack_servidores.glb`, `tablero_plc.glb` | Prensas de estampado (marco; el carro se anima por código), montacargas, AGV remolcador, racks de TI/OT y gabinetes PLC | Generados por Michel Loranca con Meshy AI | Propio |
+| Equipos `montacargas.glb`, `agv.glb`, `rack_servidores.glb`, `tablero_plc.glb` | Montacargas, AGV remolcador, racks de TI/OT y gabinetes PLC | Generados por Michel Loranca con Meshy AI | Propio |
 | Personaje con esqueleto (`worker.glb`) | Operarios (casco y chaleco añadidos por código) | Personaje Mixamo de los ejemplos de three.js – https://github.com/mrdoob/three.js/tree/dev/examples/models/gltf | Términos de Mixamo (Adobe) |
 | Texturas PBR: concreto de hangar, lámina perfilada, lámina corrugada, placa azul, placa antiderrapante, panel metálico | Piso, muros, techo, prensas, plataforma, cabina y horno | Poly Haven – https://polyhaven.com/textures | CC0 |
 | HDRI `empty_warehouse_01` | Iluminación y reflejos | Poly Haven – https://polyhaven.com/a/empty_warehouse_01 | CC0 |
@@ -60,7 +60,7 @@ Sí sirven. Recomendaciones para que se integren sin retrabajo:
 
 | Archivo | Uso | Orientación esperada |
 |---|---|---|
-| `prensa.glb` | Marco de las 5 prensas (5–6.9 m); la ventana del carro va recortada y el carro se anima por código | frente en +Z |
+| `prensa.glb` | Opcional (desactivado): la prensa de Meshy viene en una sola malla con el carro fijo y, simplificada para Quest, se ve arrugada de cerca; se usa la prensa procedural con transfer animado | frente en +Z |
 | `montacargas.glb` | Montacargas estacionados en almacén | horquillas hacia −X |
 | `agv.glb` | Flota de 6 AGV (tractor + carro, ~3.2 m) | frente hacia −X |
 | `rack_servidores.glb` | Racks de sala de control, oficina TI y firewall (los LEDs se añaden encima) | frente en +Z |

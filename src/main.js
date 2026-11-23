@@ -70,7 +70,7 @@ placeProps(scene, W);
 // personal de oficinas y sala de control
 const staff = [];
 if (A.worker) for (const p of W.people) {
-  const role = p.outfit === 'operator' ? (p.seated ? 'sala' : 'supervisor') : 'oficina';
+  const role = p.role || (p.outfit === 'operator' ? (p.seated ? 'sala' : 'supervisor') : 'oficina');
   const w = makePerson(scene, role, p.x, p.z, p.yaw, { outfit: p.outfit, seated: p.seated, headset: p.headset });
   w.root.position.y += p.y || 0;
   staff.push(w);

@@ -220,8 +220,8 @@ function aim(bone, child, dirWorld, w = 1) {
 const L = 1, R = -1;
 const POSES = {
   idle: (t, f) => [
-    ['LeftArm', 'LeftForeArm', [0.2, -1, 0.04]], ['RightArm', 'RightForeArm', [-0.2, -1, 0.04]],
-    ['LeftForeArm', 'LeftHand', [0.08, -1, 0.18]], ['RightForeArm', 'RightHand', [-0.08, -1, 0.18]],
+    ['LeftArm', 'LeftForeArm', [0.09, -1, -0.02]], ['RightArm', 'RightForeArm', [-0.09, -1, -0.02]],
+    ['LeftForeArm', 'LeftHand', [0.02, -1, 0.22]], ['RightForeArm', 'RightHand', [-0.02, -1, 0.22]],
   ],
   work: (t, f) => {
     const a = Math.sin(2.6 * t + f), b = Math.sin(2.6 * t + f + 1.7);
@@ -232,7 +232,7 @@ const POSES = {
     ];
   },
   alarm: (t) => [
-    ['LeftArm', 'LeftForeArm', [0.2, -1, 0.04]], ['LeftForeArm', 'LeftHand', [0.08, -1, 0.18]],
+    ['LeftArm', 'LeftForeArm', [0.09, -1, -0.02]], ['LeftForeArm', 'LeftHand', [0.02, -1, 0.22]],
     ['RightArm', 'RightForeArm', [-0.45, 0.85, 0.1]], ['RightForeArm', 'RightHand', [-0.25 + 0.35 * Math.sin(8 * t), 1, 0.1]],
   ],
   seated: (t, f, typing) => {
@@ -267,9 +267,8 @@ export class MeshyWorker {
     this.seated = !!opts.seated;
     this.phi = rand(0, 6.28);
     m.updateMatrixWorld(true);
-    // altura de cadera para sentarse en una silla de 0.47 m
-    const hip = this.bones.Hips, knee = this.bones.LeftLeg;
-    if (this.seated && hip && knee) { hip.getWorldPosition(_v1); knee.getWorldPosition(_v2); this.root.position.y = 0.5 - (_v1.y - this.root.position.y) + 0.0; this.seatDrop = true; }
+    // sentado: (x, z) es el centro del asiento; la cadera se acomoda sobre él tras aplicar la pose (ver seatAlign)
+    this.seat = { x, z }; this.alignN = 0;
     this.mode = null;
     scene.add(this.root);
   }
@@ -285,7 +284,7 @@ export class MeshyWorker {
     if (this.seated) mode = mode === 'alarm' ? 'seatedAlarm' : 'seated';
     const clip = mode === 'walk' || mode === 'run' ? mode : (mode === 'idle' && this.idleA) ? 'clipIdle' : (mode === 'seated' && this.sitA) ? 'clipSit' : 'pose';
     this.setMode(clip);
-    if (clip !== 'pose') { this.mixer.update(dt); return; }
+    if (clip !== 'pose') { this.mixer.update(dt); this.seatAlign(); return; }
     for (const k in this.bones) this.bones[k].quaternion.copy(this.rest[k]);
     // respiración leve
     if (this.bones.Spine) this.bones.Spine.quaternion.multiply(_rq.setFromAxisAngle(_d.set(1, 0, 0), 0.015 * Math.sin(1.6 * t + this.phi)));
@@ -301,6 +300,20 @@ export class MeshyWorker {
       aim(this.bones[b], this.bones[c], _d.clone());
     }
     if (mode === 'idle' && !this.seated) this.root.rotation.y = this.yaw + 0.12 * Math.sin(0.4 * t + this.phi);
+    this.seatAlign();
+  }
+  // Coloca la cadera (hueso Hips) sobre el asiento: silla con cojín a 0.50 m, cadera ~0.10 m arriba y 6 cm hacia el respaldo.
+  // Se mide con la pose ya aplicada, así funciona igual con la pose por código o con un clip "Sitting" de Meshy.
+  seatAlign() {
+    if (!this.seated || this.alignN >= 3 || !this.bones.Hips) return;
+    if (this.alignN === 0) this.floorY = this.root.position.y;
+    this.alignN++;
+    this.root.updateMatrixWorld(true);
+    this.bones.Hips.getWorldPosition(_v1);
+    const fx = Math.sin(this.yaw), fz = Math.cos(this.yaw);
+    this.root.position.x += this.seat.x - 0.06 * fx - _v1.x;
+    this.root.position.z += this.seat.z - 0.06 * fz - _v1.z;
+    this.root.position.y += this.floorY + 0.6 - _v1.y;
   }
 }
 

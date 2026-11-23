@@ -44,6 +44,7 @@ export const LOCATIONS = [
   { id: 'control', name: 'Sala de control', x: -106.8, y: 0, z: -21.5, yaw: Math.PI / 2 + 0.12 },
   { id: 'it', name: 'Oficinas IT', x: -106.5, y: 0, z: -37.6, yaw: Math.PI / 2 - 0.35 },
   { id: 'prensas', name: 'Estampado', x: -72, y: 0, z: -6.5, yaw: 0.1, pitch: 0.12 },
+  { id: 'subens', name: 'Prensas → Carrocería', x: -35.4, y: 0, z: -13.3, yaw: 1.42, pitch: 0.08 },
   { id: 'biw', name: 'Carrocería', x: -26, y: 0, z: 3.6, yaw: 0.1 },
   { id: 'pintura', name: 'Pintura', x: 24, y: 0, z: 3.6, yaw: 0.1 },
   { id: 'horno', name: 'Horno', x: 59, y: 0, z: 3.6, yaw: 0.2 },

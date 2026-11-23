@@ -200,7 +200,7 @@ export function buildControlRoom(root, W, vw, people) {
   // operadores sentados (con diadema) y supervisor de pie
   people.push({ x: -113.0 + 0.62, y: 0, z: -24.65, yaw: -Math.PI / 2, outfit: 'operator', seated: true, headset: true });
   people.push({ x: -109.6 + 0.62, y: 0.2, z: -22.0, yaw: -Math.PI / 2, outfit: 'operator', seated: true, headset: true });
-  people.push({ x: -107.4, y: 0.2, z: -18.6, yaw: -Math.PI / 2 - 0.4, outfit: 'office', seated: false });
+  people.push({ x: -107.4, y: 0.2, z: -18.6, yaw: -Math.PI / 2 - 0.4, outfit: 'office', seated: false, role: 'supervisor' });
   // racks SCADA/MES y estación de ingeniería
   addRack(root, W, -105.75, -16.0, -Math.PI / 2, 'srv');
   addRack(root, W, -105.75, -16.62, -Math.PI / 2, 'net');

@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { LINE, slotX } from './config.js';
-import { Batcher, G, M, P, mergeColored, mergeParts, slab, CanvasPanel, rand, damp, smooth, clamp, lerp, FONT, roundRect } from './util.js';
+import { Batcher, G, M, P, mergeColored, mergeParts, slab, CanvasPanel, rand, damp, smooth, clamp, lerp, FONT, roundRect, makeSign } from './util.js';
 import { S, lineRunning } from './state.js';
 import { A } from './assets.js';
 import { RealRobot } from './robots.js';
@@ -289,6 +289,8 @@ export class Line {
       if (i !== 17) this.workers.push({ w: (A.worker ? makePerson(scene, 'linea', slotX(i) + rand(-0.8, 0.8), LINE.z + 2.0, Math.PI, { helmet: 0xffffff, outfit: 'coverall' }) : new Worker(scene, slotX(i), LINE.z + 2.0, Math.PI, vests[i % 2], 0xffffff)), slot: i });
       if (i !== 19 && i !== 17) this.workers.push({ w: (A.worker ? makePerson(scene, 'linea', slotX(i) + rand(-0.8, 0.8), LINE.z - 2.0, 0, { helmet: 0xffd21a, outfit: 'coverall' }) : new Worker(scene, slotX(i), LINE.z - 2.0, 0, vests[(i + 1) % 2], 0xffd21a)), slot: i });
     }
+    // operario de la celda de sub-ensamble de piso (junto a la mesa, del lado de la banda)
+    if (A.worker) this.workers.push({ w: makePerson(scene, 'linea', this.cell.FX - 2.9, this.cell.FZ + 0.2, Math.PI / 2, { helmet: 0xffd21a, outfit: 'coverall' }), slot: -1 });
     this.workers.push({ w: (A.worker ? makePerson(scene, 'calidad', slotX(23) + 0.5, LINE.z + 2.1, Math.PI, { helmet: 0xffffff, outfit: 'operator' }) : new Worker(scene, slotX(23) + 0.5, LINE.z + 2.1, Math.PI, 0x2f80ed, 0xffffff)), slot: 23 });
     this.workers.push({ w: (A.worker ? makePerson(scene, 'calidad', slotX(22) - 2.8, LINE.z + 2.2, Math.PI * 0.75, { helmet: 0xffffff, outfit: 'operator' }) : new Worker(scene, slotX(22) - 2.8, LINE.z + 2.2, Math.PI * 0.75, 0x2f80ed, 0xffffff)), slot: 22 });
     // peatones en pasillo
@@ -322,17 +324,30 @@ export class Line {
     // pórtico de geometría (framing) en estación 2 y 3
     if (!A.ok) for (const sx of [slotX(2) - 2, slotX(2) + 2, slotX(3) - 2, slotX(3) + 2]) { sb.box(0.35, 4.2, 0.35, M.steel, sx, 2.1, z - 3.4); sb.box(0.35, 4.2, 0.35, M.steel, sx, 2.1, z + 3.4); sb.box(0.35, 0.35, 7.2, M.steel, sx, 4.3, z); }
     if (!A.ok) { sb.box(4.4, 0.35, 0.35, M.steel, slotX(2), 4.3, z - 3.4); sb.box(4.4, 0.35, 0.35, M.steel, slotX(2), 4.3, z + 3.4); }
-    // grúa de alimentación
-    const fxp = slotX(-1);
-    for (const dz of [-2.2, 2.2]) sb.box(0.3, 6.6, 0.3, M.yellow, fxp, 3.3, z + dz);
-    sb.box(0.4, 0.4, 5, M.yellow, fxp, 6.6, z);
-    sb.box(1.2, 0.5, 0.9, M.darkSteel, fxp, 6.2, z);
+    // ----- celda de sub-ensamble de piso: recibe las piezas estampadas de la banda de prensas;
+    //       una grúa puente sube el piso armado y lo deposita en la estación 0 de carrocería -----
+    const FX = slotX(0), FZ = -13.6, FY = 0.95, CR = 6.2;
+    this.cell = { FX, FZ, FY, CR, HY: 4.2 };
+    sb.box(4.2, 0.12, 1.6, M.darkSteel, FX, FY - 0.25, FZ);
+    for (const dx of [-1.9, 1.9]) for (const dz of [-0.7, 0.7]) sb.box(0.12, FY - 0.31, 0.12, M.darkSteel, FX + dx, (FY - 0.31) / 2, FZ + dz);
+    for (const dx of [-1.5, 0, 1.5]) for (const dz of [-0.62, 0.62]) { sb.box(0.12, 0.14, 0.12, M.yellow, FX + dx, FY - 0.12, FZ + dz); sb.box(0.06, 0.1, 0.18, M.darkSteel, FX + dx, FY - 0.02, FZ + dz); }
+    // grúa puente: 4 postes, 2 vigas carril a lo largo de z, puente y carro móviles
+    const cz0 = FZ - 1.5, cz1 = z + 1.7;
+    for (const dx of [-2.6, 2.6]) {
+      for (const zz of [cz0, cz1]) sb.box(0.3, CR, 0.3, M.yellow, FX + dx, CR / 2, zz);
+      sb.box(0.3, 0.4, cz1 - cz0 + 0.3, M.yellow, FX + dx, CR + 0.2, (cz0 + cz1) / 2);
+    }
+    this.crane = new THREE.Group();
+    const bridge = new THREE.Mesh(G.box, M.yellow); bridge.scale.set(5.5, 0.4, 0.4); bridge.position.y = CR + 0.6; this.crane.add(bridge);
+    const trolley = new THREE.Mesh(G.box, M.darkSteel); trolley.scale.set(1.1, 0.5, 0.9); trolley.position.y = CR + 0.15; this.crane.add(trolley);
     this.hoist = new THREE.Group();
-    const hookMat = M.darkSteel;
-    for (const [dx, dz] of [[1.6, 0.6], [1.6, -0.6], [-1.6, 0.6], [-1.6, -0.6]]) { const c = new THREE.Mesh(G.cyl8, hookMat); c.scale.set(0.015, 1, 0.015); c.position.set(dx, 0.5, dz); c.userData.cable = true; this.hoist.add(c); }
+    for (const [dx, dz] of [[1.6, 0.6], [1.6, -0.6], [-1.6, 0.6], [-1.6, -0.6]]) { const c = new THREE.Mesh(G.cyl8, M.darkSteel); c.scale.set(0.015, 1, 0.015); c.position.set(dx, 0.5, dz); c.userData.cable = true; this.hoist.add(c); }
     const bar = new THREE.Mesh(G.box, M.yellow); bar.scale.set(3.6, 0.12, 1.4); this.hoist.add(bar); this.hoistBar = bar;
-    this.hoist.position.set(fxp, 0, z);
-    scene.add(this.hoist);
+    this.crane.add(this.hoist);
+    this.crane.position.set(FX, 0, FZ);
+    scene.add(this.crane);
+    const cellSign = makeSign(['SUB-ENSAMBLE DE PISO', 'Piezas estampadas → estación 0 de carrocería'], 3.2, { w: 1024, h: 220, bg: '#1d3557', stripe: '#f2c200', sizes: [64, 38] });
+    cellSign.position.set(FX + 2.6, 3.4, cz1 + 0.17); scene.add(cellSign);
 
     // ----- cabina de pintura -----
     const bx0 = 8, bx1 = 48, bz0 = z - 4.5, bz1 = z + 4.5, bh = 6.5, bc = (bx0 + bx1) / 2;
@@ -458,19 +473,28 @@ export class Line {
     const X = (s) => (s >= this.N ? slotX(this.N - 1) + 13 : slotX(s));
     for (const b of this.bodies) {
       const s = b.slot;
-      let x, y = LINE.bodyY;
-      if (moving) { x = lerp(X(s), X(s + 1), p); if (s === -1) y = lerp(4.2, LINE.bodyY, p); }
-      else { x = X(s); if (s === -1) y = 4.2; }
-      b.g.position.set(x, y, LINE.z);
+      let x, y = LINE.bodyY, bz = LINE.z;
+      if (s === -1) {
+        // piso en la celda de sub-ensamble → la grúa lo sube, lo lleva sobre la estación 0 y lo baja
+        const C = this.cell, q = moving ? this.t / LINE.move : 0;
+        const k1 = smooth(clamp(q / 0.3, 0, 1)), k2 = smooth(clamp((q - 0.3) / 0.4, 0, 1)), k3 = smooth(clamp((q - 0.7) / 0.3, 0, 1));
+        x = C.FX; bz = C.FZ + (LINE.z - C.FZ) * k2;
+        y = k3 > 0 ? C.HY + (LINE.bodyY - C.HY) * k3 : C.FY + (C.HY - C.FY) * k1;
+      } else if (moving) x = lerp(X(s), X(s + 1), p);
+      else x = X(s);
+      b.g.position.set(x, y, bz);
       const desired = s < 0 ? -1 : (!moving && workT > 2.2) ? s : s - 1;
       if (desired > b.shown) b.setShown(desired);
     }
     // grúa de alimentación
     const feed = this.bodyAt(-1);
     if (feed) {
-      const hy = feed.g.position.y + 0.32;
+      const hy = feed.g.position.y + 0.32, top = this.cell.CR - 0.1;
+      this.crane.position.z = feed.g.position.z;
       this.hoistBar.position.y = hy;
-      this.hoist.children.forEach((c) => { if (c.userData.cable) { const len = 6.0 - hy; c.scale.y = len; c.position.y = hy + len / 2; } });
+      this.hoist.children.forEach((c) => { if (c.userData.cable) { const len = top - hy; c.scale.y = len; c.position.y = hy + len / 2; } });
+      // soldadura del piso mientras está en la celda
+      if (!moving && running && Math.random() < dt * 8) { _v.set(this.cell.FX + rand(-1.8, 1.8), this.cell.FY + 0.15, this.cell.FZ + rand(-0.6, 0.6)); this.fx.sparks.emit(_v, 10, new THREE.Color(1, 0.75, 0.3), 2.2, 1, null, 0.45); }
     }
     const working = running && !moving && workT > 0.4 && workT < LINE.cycle - LINE.move - 0.6;
     // robots

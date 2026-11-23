@@ -118,33 +118,66 @@ export class PressLine {
       this.plates = this.plates || [];
       this.plates.push([x, pi]);
     });
-    // transfer: rieles longitudinales sobre la línea (barras de alimentación)
-    const xa = PRESS.xs[0] - 9, xb = PRESS.xs[PRESS.xs.length - 1] + 7.5;
-    for (const dz of [-1.25, 1.25]) sb.box(xb - xa, 0.18, 0.12, M.steel, (xa + xb) / 2, this.real ? this.bedY + 1.15 : 3.2, z + dz);
+    // ---- transfer tipo crossbar: dos rieles corridos por las ventanas de las prensas; las barras con ventosas
+    //      cuelgan de carros que corren sobre los rieles (toman la pieza, la llevan a la siguiente prensa y se estacionan) ----
+    const n = PRESS.xs.length, last = PRESS.xs[n - 1];
+    this.RY = this.real ? this.bedY + 1.15 : 3.2; this.RZ = 1.0;
+    const x0 = PRESS.xs[0] - 9;
+    const xa = x0 - 0.5, xb = last + 5.0;
+    for (const dz of [-this.RZ, this.RZ]) {
+      sb.box(xb - xa, 0.16, 0.12, M.steel, (xa + xb) / 2, this.RY + 0.08, z + dz);
+      sb.box(xb - xa, 0.03, 0.16, M.yellow, (xa + xb) / 2, this.RY + 0.175, z + dz);
+    }
+    // soportes de los rieles entre prensas (marcos en U invertida)
+    for (let i = 0; i <= n; i++) {
+      const sx = i === 0 ? PRESS.xs[0] - 4.5 : i === n ? last + 4.3 : (PRESS.xs[i - 1] + PRESS.xs[i]) / 2;
+      for (const dz of [-this.RZ - 0.25, this.RZ + 0.25]) sb.box(0.14, this.RY + 0.35, 0.14, M.yellow, sx, (this.RY + 0.35) / 2, z + dz);
+      sb.box(0.16, 0.14, 2 * this.RZ + 0.64, M.yellow, sx, this.RY + 0.42, z);
+    }
     // pasarela posterior a nivel de coronas
     sb.box(xb - xa, 0.08, 1.2, M.plate, (xa + xb) / 2, 9.25, z - 3.1);
     sb.box(xb - xa, 0.05, 0.05, M.yellow, (xa + xb) / 2, 10.3, z - 3.7);
-    // bobina y desenrollador
-    const x0 = PRESS.xs[0] - 9;
+    // bobina, desenrollador y mesa de lámina en blanco
     sb.cyl(1.1, 1.4, M.coil, x0 - 1.5, 1.4, z, Math.PI / 2);
     sb.box(0.3, 1.5, 2.0, M.darkSteel, x0 - 1.5, 0.75, z);
     sb.box(3.0, 0.9, 2.2, M.pressDark, x0 + 1.2, 0.45, z);
-    // salida: racks de piezas
-    const xo = PRESS.xs[PRESS.xs.length - 1] + 7.5;
-    for (let i = 0; i < 2; i++) {
-      sb.box(2.4, 0.1, 1.8, M.darkSteel, xo + i * 2.8, 0.15, z);
-      for (let k = 0; k < 8; k++) sb.box(1.8, 0.04, 1.2, M.sheet, xo + i * 2.8, 0.25 + k * 0.08, z, 0, 0.1, 0);
-      for (const dx of [-1.1, 1.1]) sb.box(0.08, 1.4, 1.7, M.darkSteel, xo + i * 2.8 + dx, 0.8, z);
+    for (let k = 0; k < 6; k++) sb.box(1.8, 0.03, 1.3, M.sheet, x0 + 1.2, 0.92 + k * 0.035, z);
+    // ---- banda de rodillos de salida: lleva las piezas estampadas a la celda de sub-ensamble de piso (inicio de carrocería) ----
+    const CY = 0.82, FX = -40, FZ = -13.6;
+    const path = [[last + 4.4, z], [FX, z], [FX, FZ - 1.7]];
+    this.conv = { pts: path, CY, len: [], L: 0 };
+    for (let i = 0; i < path.length - 1; i++) { const l = Math.hypot(path[i + 1][0] - path[i][0], path[i + 1][1] - path[i][1]); this.conv.len.push(l); this.conv.L += l; }
+    const rollers = [];
+    for (let i = 0; i < path.length - 1; i++) {
+      const [ax, az] = path[i], [bx, bz] = path[i + 1], l = this.conv.len[i], alongX = Math.abs(bx - ax) > 0.01;
+      const cx = (ax + bx) / 2, cz = (az + bz) / 2, ext = i === 0 ? 0.8 : 0.8;
+      // largueros laterales y patas
+      for (const sd of [-0.78, 0.78]) {
+        if (alongX) sb.box(l + ext, 0.16, 0.08, M.darkSteel, cx, CY - 0.1, cz + sd);
+        else sb.box(0.08, 0.16, l + ext, M.darkSteel, cx + sd, CY - 0.1, cz);
+      }
+      for (let k = 0; k <= Math.ceil(l / 1.6); k++) {
+        const t = Math.min(1, k / Math.ceil(l / 1.6)), px = ax + (bx - ax) * t, pz = az + (bz - az) * t;
+        for (const sd of [-0.72, 0.72]) sb.box(0.07, CY - 0.15, 0.07, M.darkSteel, alongX ? px : px + sd, (CY - 0.15) / 2, alongX ? pz + sd : pz);
+      }
+      for (let k = 0; k < l / 0.25; k++) { const t = k * 0.25 / l; rollers.push([ax + (bx - ax) * t, az + (bz - az) * t, alongX]); }
     }
-    sb.box(3.5, 0.8, 1.6, M.darkSteel, xo - 2.8, 0.4, z);
-    // cercado
-    const fx0 = x0 - 3, fx1 = xo + 4.5;
+    const rm = new THREE.InstancedMesh(G.cyl, M.rim, rollers.length), d = new THREE.Object3D();
+    rollers.forEach(([rx, rz, alongX], i) => { d.position.set(rx, CY - 0.04, rz); d.rotation.set(alongX ? Math.PI / 2 : 0, 0, alongX ? 0 : Math.PI / 2); d.scale.set(0.05, 1.5, 0.05); d.updateMatrix(); rm.setMatrixAt(i, d.matrix); });
+    scene.add(rm);
+    // señalización del flujo
+    const flow = makeSign(['PIEZAS ESTAMPADAS → CARROCERÍA', 'Banda de salida a sub-ensamble de piso'], 3.4, { w: 1024, h: 220, bg: '#1d3557', stripe: '#f2c200', sizes: [64, 40] });
+    flow.position.set(last + 8.5, 2.6, z + 1.0); scene.add(flow);
+    sb.box(0.08, 2.2, 0.08, M.darkSteel, last + 8.5, 1.1, z + 0.95);
+    // cercado (se extiende para encerrar la banda de salida y la celda de sub-ensamble)
+    const fx0 = x0 - 3, fx1 = -35;
     for (const fz of [z - 6.5, z + 6.5]) {
       for (let x = fx0; x < fx1; x += 2) {
         sb.box(2, 2.2, 0.02, M.fence, x + 1, 1.2, fz);
         sb.box(0.06, 2.3, 0.06, M.fencePost, x, 1.15, fz);
       }
     }
+    for (let zz = z - 6.5; zz < z + 6.5; zz += 2) { if (zz + 1 > z + 3.0) { sb.box(0.06, 2.3, 0.06, M.fencePost, fx1, 1.15, zz); continue; } sb.box(0.02, 2.2, 2, M.fence, fx1, 1.2, zz + 1); sb.box(0.06, 2.3, 0.06, M.fencePost, fx1, 1.15, zz); }
     sb.build(scene);
     // láminas
     this.sheets = [];
@@ -154,13 +187,23 @@ export class PressLine {
       m.scale.set(1.8, 0.03, 1.3);
       scene.add(m);
       this.sheets.push(m);
+      // barra con ventosas + 2 tubos telescópicos que suben a los carros sobre los rieles
       const bar = new THREE.Group();
-      const cb = new THREE.Mesh(G.box, M.darkSteel); cb.scale.set(0.12, 0.1, 2.6); bar.add(cb);
-      for (const dz of [-0.45, 0.45]) for (const dx of [-0.6, 0.6]) { const cup = new THREE.Mesh(G.cyl, M.black); cup.scale.set(0.06, 0.12, 0.06); cup.position.set(dx, -0.1, dz); bar.add(cup); }
-      for (const dz of [-0.45, 0.45]) { const arm = new THREE.Mesh(G.box, M.darkSteel); arm.scale.set(1.3, 0.04, 0.04); arm.position.set(0, -0.05, dz); bar.add(arm); }
+      const cb = new THREE.Mesh(G.box, M.yellow); cb.scale.set(0.14, 0.12, 2 * this.RZ + 0.1); bar.add(cb);
+      for (const dz of [-0.45, 0.45]) for (const dx of [-0.6, 0.6]) { const cup = new THREE.Mesh(G.cyl, M.black); cup.scale.set(0.07, 0.1, 0.07); cup.position.set(dx, -0.1, dz); bar.add(cup); }
+      for (const dz of [-0.45, 0.45]) { const arm = new THREE.Mesh(G.box, M.darkSteel); arm.scale.set(1.3, 0.05, 0.05); arm.position.set(0, -0.05, dz); bar.add(arm); }
+      const hangers = [];
+      for (const dz of [-this.RZ, this.RZ]) {
+        const tube = new THREE.Mesh(G.cyl, M.rim); tube.scale.set(0.07, 1, 0.07); tube.position.z = dz; bar.add(tube); hangers.push(tube);
+        const cart = new THREE.Mesh(G.box, M.darkSteel); cart.scale.set(0.5, 0.18, 0.22); cart.position.z = dz; bar.add(cart); hangers.push(cart);
+      }
+      bar.userData.hangers = hangers;
       scene.add(bar);
       this.bars.push(bar);
     }
+    // piezas que viajan por la banda de salida
+    this.convParts = [];
+    for (let k = 0; k < 5; k++) { const m = new THREE.Mesh(G.box, M.sheet); m.scale.set(1.8, 0.16, 1.3); scene.add(m); this.convParts.push(m); }
     // placas de identificación en las coronas
     this.plates.forEach(([x, pi]) => {
       const sign = makeSign(['PRENSA ' + (pi + 1), pi === 0 ? 'Embutido · 2,400 t' : 'Servoprensa · 1,000 t'], 2.6, { w: 768, h: 256, bg: '#e4e7ea', fg: '#1d3557', stripe: '#f2c200' });
@@ -208,25 +251,40 @@ export class PressLine {
     // golpe en punto muerto inferior
     if (!S.pressStopped && this.lastPhase < 0.225 && u >= 0.225) this.audio?.thump(new THREE.Vector3(PRESS.xs[2], 1, PRESS.z));
     this.lastPhase = u;
-    // transfer de láminas
-    const v = press ? 0 : smooth((u - 0.45) / 0.55);
-    const lift = press ? 0 : Math.sin(Math.PI * (u - 0.45) / 0.55);
-    const xs = [PRESS.xs[0] - 9, ...PRESS.xs.map((x) => x + this.off), PRESS.xs[n - 1] + 7.5];
+    // transfer de láminas con crossbar: aproximación → toma → traslado con elevación → regreso a estacionamiento
+    const last = PRESS.xs[n - 1], C = this.conv;
+    const xs = [PRESS.xs[0] - 9 + 1.2, ...PRESS.xs.map((x) => x + this.off), C.pts[0][0]];
     const bed = this.bedY + (this.real ? 0.22 : 0.15), hop = this.real ? 0.6 : 0.9;
+    const yOf = (i) => (i === 0 ? 1.12 : i === n + 1 ? C.CY + 0.1 : bed);
+    const GRIP = 0.2, PY = this.RY - 0.65;
+    const w = press ? -1 : (u - 0.45) / 0.55;
     for (let i = 0; i <= n; i++) {
-      const s = this.sheets[i];
-      const a = xs[i], b = xs[i + 1];
-      const moving = !(press || S.pressStopped);
-      const x = moving ? a + (b - a) * v : a;
-      const ya = i === 0 ? 1.0 : bed, yb = i === n ? 1.0 : bed;
-      s.position.set(x, (moving ? ya + (yb - ya) * v : ya) + hop * lift * (S.pressStopped ? 0 : 1), PRESS.z);
+      const s = this.sheets[i], bar = this.bars[i];
+      const a = xs[i], b = xs[i + 1], ya = yOf(i), yb = yOf(i + 1), xm = (a + b) / 2;
+      let sx = a, sy = ya, bx = xm, by = PY;
+      if (w >= 0 && w < 0.22) { const k = smooth(w / 0.22); bx = xm + (a - xm) * k; by = PY + (ya + GRIP - PY) * k; }
+      else if (w >= 0.22 && w < 0.78) { const k = smooth((w - 0.22) / 0.56); sx = a + (b - a) * k; sy = ya + (yb - ya) * k + hop * Math.sin(Math.PI * k); bx = sx; by = sy + GRIP; }
+      else if (w >= 0.78) { const k = smooth((w - 0.78) / 0.22); sx = b; sy = yb; bx = b + (xm - b) * k; by = yb + GRIP + (PY - yb - GRIP) * k; }
+      s.position.set(sx, sy, PRESS.z);
       s.scale.y = i === 0 ? 0.03 : 0.16;
-      if (S.pressStopped && i === 3) { s.rotation.z = 0.5; s.position.y = bed + 0.35; }
-      else s.rotation.z = 0;
-      const bar = this.bars[i];
-      bar.position.set(s.position.x, Math.max(s.position.y + 0.2, this.real ? bed + 0.35 : 1.75), PRESS.z);
-      bar.visible = !(S.pressStopped && i === 3) && !(this.real && press);
+      s.rotation.z = 0;
+      // la última pieza pasa a la banda de salida en cuanto la suelta la barra
+      s.visible = !(i === n && w >= 0.78);
+      if (S.pressStopped && i === 3) { s.position.set(a, bed + 0.35, PRESS.z); s.rotation.z = 0.5; }
+      bar.position.set(bx, by, PRESS.z);
+      const top = this.RY - 0.09 - by;
+      bar.userData.hangers.forEach((h, j) => { if (j % 2 === 0) { h.scale.y = top; h.position.y = top / 2; } else h.position.y = top; });
     }
+    // banda de salida: una pieza por ciclo, sincronizada con la descarga de la última prensa
+    const step = C.L / this.convParts.length, ph = (((u - 0.879) % 1) + 1) % 1;
+    this.convParts.forEach((m, k) => {
+      let d = (ph + k) * step, seg = 0;
+      while (seg < C.len.length - 1 && d > C.len[seg]) { d -= C.len[seg]; seg++; }
+      const [ax, az] = C.pts[seg], [bx2, bz2] = C.pts[seg + 1], t = Math.min(1, d / C.len[seg]);
+      m.position.set(ax + (bx2 - ax) * t, C.CY + 0.1, az + (bz2 - az) * t);
+      m.rotation.y = seg === 0 ? 0 : Math.PI / 2;
+      m.visible = (ph + k) * step < C.L - 0.5;
+    });
     if (S.pressStopped && this.crashPos && Math.random() < dt * 6) {
       this.fx.smoke.emit(this.crashPos, 0x3a3a3a, 1.6, 6, 0.9);
       if (Math.random() < 0.3) this.fx.sparks.emit(this.crashPos, 12, new THREE.Color(1, 0.6, 0.2), 3, 1, null, 0.6);
