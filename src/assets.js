@@ -82,7 +82,7 @@ export function machine(k, o = {}) {
   const inner = R.scene.clone(true);
   inner.scale.set(sx, sy, sz);
   inner.position.set(-c.x * sx, -R.box.min.y * sy, -c.z * sz);
-  const g = new THREE.Group(); g.add(inner);
+  const g = new THREE.Group(); g.add(inner); g.name = 'mach:' + k;
   g.userData.size = new THREE.Vector3(size.x * sx, size.y * sy, size.z * sz);
   g.userData.toW = (mx, my, mz) => new THREE.Vector3((mx - c.x) * sx, (my - R.box.min.y) * sy, (mz - c.z) * sz);
   return g;

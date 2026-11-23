@@ -11,6 +11,7 @@ function inst(scene, key, list) {
   g.scene.traverse((o) => {
     if (!o.isMesh) return;
     const im = new THREE.InstancedMesh(o.geometry, o.material, list.length);
+    im.name = 'prop:' + key;
     list.forEach(([x, y, z, ry = 0, s = 1], i) => {
       _m.compose(_p.set(x, y, z), _q.setFromEuler(_e.set(0, ry, 0)), _s.set(s, s, s)).multiply(o.matrixWorld);
       im.setMatrixAt(i, _m);
@@ -26,11 +27,17 @@ export function placeProps(scene, W) {
   const z = LINE.z;
   // estanterías de lado de línea en ensamble, con cajas
   const shelves = [], boxes = [];
+  // los postes del transportador aéreo de ensamble están en x = 63, 69, …, 99 y z = ±3.2: la estantería se recorre para no atravesarlos
+  const posts = []; for (let px = 63; px <= 99; px += 6) posts.push(px);
   for (let i = 16; i <= 21; i++) for (const s of [-1, 1]) {
     if (i === 19 && s < 0) continue;
-    const x = slotX(i) - 1.6, zz = z + s * 3.35;
+    let x = slotX(i) - 1.6;
+    const p = posts.reduce((a, b) => (Math.abs(b - x) < Math.abs(a - x) ? b : a));
+    if (Math.abs(x - p) < 0.75) x = p + (x >= p ? 0.75 : -0.75);
+    const zz = z + s * 3.35;
     shelves.push([x, 0, zz, s > 0 ? Math.PI : 0, 0.09]);
-    boxes.push([x - 0.25, 0.02, zz + s * 0.0, Math.random() * 0.3, 1.0], [x + 0.25, 0.02, zz, Math.random() * 0.3, 1.0]);
+    // dos cajas sobre la repisa inferior (tabla a 0.12 m), escaladas para caber en el fondo de 0.46 m
+    boxes.push([x - 0.22, 0.125, zz, (Math.random() - 0.5) * 0.15, 0.72], [x + 0.22, 0.125, zz, (Math.random() - 0.5) * 0.15, 0.72]);
   }
   inst(scene, 'shelves', shelves);
   // cajas de cartón (lado de línea y salida de prensas)

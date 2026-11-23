@@ -14,6 +14,8 @@ const _v = new THREE.Vector3();
 const _s = new THREE.Vector3();
 
 // ---------- Static geometry batcher (merges by material => pocas draw calls) ----------
+// depuración: ?dbgprims guarda las cajas de todas las primitivas estáticas para detectar objetos que se atraviesan
+const DBG_PRIMS = typeof location !== 'undefined' && location.search.includes('dbgprims') ? (globalThis.__prims = []) : null;
 export class Batcher {
   constructor() { this.map = new Map(); }
   add(geo, mat, x = 0, y = 0, z = 0, rx = 0, ry = 0, rz = 0, sx = 1, sy = 1, sz = 1) {
@@ -26,6 +28,7 @@ export class Batcher {
     _q.setFromEuler(_e.set(rx, ry, rz));
     _m.compose(_v.set(x, y, z), _q, _s.set(sx, sy, sz));
     g.applyMatrix4(_m);
+    if (DBG_PRIMS) { g.computeBoundingBox(); DBG_PRIMS.push({ b: g.boundingBox.clone(), mat: mat.name || mat.uuid.slice(0, 6), color: mat.color ? mat.color.getHexString() : '' }); }
     if (!this.map.has(mat)) this.map.set(mat, []);
     this.map.get(mat).push(g);
     return this;
@@ -177,7 +180,14 @@ export function signTexture(lines, opts = {}) {
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
   const sizes = opts.sizes || [h * 0.42, h * 0.2];
   const ys = lines.length === 1 ? [h / 2] : [h * 0.4, h * 0.76];
-  lines.forEach((t, i) => { ctx.font = `700 ${sizes[i]}px ${FONT}`; ctx.fillText(t, w / 2, ys[i]); });
+  // el texto se reduce hasta caber en el ancho (con margen) para que nunca se corte
+  const maxW = w * 0.92;
+  lines.forEach((t, i) => {
+    let fs = sizes[i];
+    ctx.font = `700 ${fs}px ${FONT}`;
+    while (fs > 10 && ctx.measureText(t).width > maxW) { fs -= 2; ctx.font = `700 ${fs}px ${FONT}`; }
+    ctx.fillText(t, w / 2, ys[i]);
+  });
   return canvasTex(c);
 }
 export function makeSign(lines, worldW, opts = {}) {

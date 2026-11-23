@@ -397,7 +397,7 @@ export class Line {
         for (let k = 0; k < 3; k++) sb.box(0.42, 0.25, 0.6, M.binBlue, x - 1.9 + k * 0.5, 1.03, z + s * 3.1);
       }
     }
-    for (let k = 0; k < 6; k++) sb.cyl(0.34, 0.24, M.tire, slotX(18) - 1.5 + (k % 3) * 0.75, 0.15 + Math.floor(k / 3) * 0.25, z + 3.3);
+    for (let k = 0; k < 6; k++) sb.cyl(0.34, 0.24, M.tire, slotX(18) + 0.3 + (k % 3) * 0.75, 0.15 + Math.floor(k / 3) * 0.25, z + 3.3);
     // mesa de matrimonio (powertrain)
     this.lift = new THREE.Group();
     const lt = new THREE.Mesh(G.box, M.lift); lt.scale.set(2.6, 0.12, 1.1); this.lift.add(lt);

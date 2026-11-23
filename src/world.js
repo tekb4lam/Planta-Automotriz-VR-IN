@@ -220,15 +220,15 @@ export function buildWorld(scene) {
     let fz = 0.31, ly = 1.95, ty = 1.85, tx = -0.3;
     if (real) {
       // tablero de Meshy (frente +z); LED de estado y etiqueta sobre su puerta
-      g.add(real); fz = real.userData.size.z / 2 + 0.01; ly = 1.78; ty = 1.62; tx = -0.25;
+      g.add(real); fz = real.userData.size.z / 2 + 0.01; ly = 1.78; ty = 1.79; tx = 0.02;
     } else {
       const body = new THREE.Mesh(G.box, M.cabinet); body.scale.set(1.8, 2.1, 0.6); body.position.y = 1.15; g.add(body);
       const plinth = new THREE.Mesh(G.box, M.darkSteel); plinth.scale.set(1.8, 0.1, 0.6); plinth.position.y = 0.05; g.add(plinth);
       const seam = new THREE.Mesh(G.box, M.darkSteel); seam.scale.set(0.02, 2.0, 0.62); seam.position.y = 1.15; g.add(seam);
     }
-    const l = new THREE.Mesh(G.sphere, led); l.scale.setScalar(0.06); l.position.set(real ? 0.42 : 0.6, ly, fz); g.add(l);
+    const l = new THREE.Mesh(G.sphere, led); l.scale.setScalar(0.06); l.position.set(real ? 0.45 : 0.6, ly, fz); g.add(l);
     const tag = makeSign(['PLC · ' + ({ plc_press: 'PRENSAS', plc_biw: 'CARROCERÍA', plc_paint: 'PINTURA', plc_oven: 'HORNO', plc_asm: 'ENSAMBLE', plc_qc: 'CALIDAD' }[id])], 0.9, { w: 512, h: 128, bg: '#ffffff', fg: '#111', sizes: [60] });
-    tag.position.set(tx, ty, fz); if (real) tag.scale.setScalar(0.7); g.add(tag);
+    tag.position.set(tx, ty, fz); if (real) tag.scale.setScalar(0.42); g.add(tag);
     if (!real) { const hmi = new THREE.Mesh(G.box, M.screenOff); hmi.scale.set(0.38, 0.26, 0.03); hmi.position.set(0.45, 1.5, 0.31); g.add(hmi); }
     root.add(g);
     W.cabinets[id] = { g, led };
@@ -425,7 +425,7 @@ export function drawZoneSign(W, id) {
   ctx.fillStyle = '#0f1f2e'; ctx.fillRect(0, 0, w, h);
   ctx.fillStyle = '#16324d'; ctx.fillRect(0, 0, w, 175);
   ctx.fillStyle = '#fff'; ctx.font = `800 92px ${FONT}`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-  ctx.fillText(ZONES[id].toUpperCase(), w / 2, 92);
+  ctx.fillText(ZONES[id].toUpperCase(), w / 2, 92, w - 60);
   ctx.fillStyle = col; roundRect(ctx, 24, 190, w - 48, 92, 16); ctx.fill();
   ctx.fillStyle = '#fff'; ctx.font = `800 54px ${FONT}`;
   const label = { ok: 'OPERANDO', warn: 'ALERTA', stop: 'PARO', attack: 'INCIDENTE CIBER' }[z.status];
