@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { AGVP, WALK } from './config.js';
 import { M, P, mergeColored, rand, emissiveMat } from './util.js';
 import { S } from './state.js';
+import { machine } from './assets.js';
 
 const LOOP = [[AGVP.x0, AGVP.zE], [AGVP.x1, AGVP.zE], [AGVP.x1, AGVP.zW], [AGVP.x0, AGVP.zW]];
 const SEG = LOOP.map((p, i) => { const q = LOOP[(i + 1) % 4]; return { a: p, b: q, len: Math.hypot(q[0] - p[0], q[1] - p[1]) }; });
@@ -38,9 +39,17 @@ export class AGVFleet {
     this.list = [];
     for (let i = 0; i < 6; i++) {
       const g = new THREE.Group();
-      g.add(new THREE.Mesh(agvGeo(), M.vc));
       const lm = emissiveMat(0x22ff55, 2.5);
-      const light = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.05, 1.04), lm); light.position.y = 0.43; g.add(light);
+      const real = machine('agv', { length: 3.2 });
+      if (real) {
+        // tractor AGV + carro de Meshy (su frente es -x: se gira para avanzar hacia +x)
+        real.rotation.y = Math.PI; g.add(real);
+        const t = real.userData.toW(-0.7, 0.26, 0);
+        const light = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.05, 0.28), lm); light.position.set(-t.x, t.y + 0.03, 0); g.add(light);
+      } else {
+        g.add(new THREE.Mesh(agvGeo(), M.vc));
+        const light = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.05, 1.04), lm); light.position.y = 0.43; g.add(light);
+      }
       scene.add(g);
       this.list.push({ g, lm, d: (L / 6) * i + 5, wait: 0, hijack: false, crashed: false, target: new THREE.Vector3(), inWalk: false, heading: 0 });
     }

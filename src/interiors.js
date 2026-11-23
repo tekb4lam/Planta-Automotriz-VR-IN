@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { ROOMS } from './config.js';
 import { Batcher, G, M, CanvasPanel, makeCanvas, canvasTex, FONT, rand } from './util.js';
+import { machine } from './assets.js';
 
 // Interiores realistas: consolas de sala de control, escritorios de oficina, sillas ergonómicas,
 // monitores con bisel y racks de servidores con frente detallado y LEDs.
@@ -91,7 +92,24 @@ function rackMats(kind, W) {
   return RACK[kind];
 }
 const RACK_GEO = new THREE.BoxGeometry(0.6, 2.0, 1.07);
+// Rack de Meshy con una capa de LEDs (solo emisiva, mezcla aditiva) que sigue parpadeando; si no, caja con textura.
+const LEDS = {};
+function ledMat(kind, W) {
+  if (LEDS[kind]) return LEDS[kind];
+  const { te } = rackTexture(kind);
+  const m = new THREE.MeshStandardMaterial({ color: 0x000000, emissiveMap: te, emissive: 0xffffff, emissiveIntensity: 1.6, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false });
+  (W.rackLeds = W.rackLeds || []).push(m);
+  return (LEDS[kind] = m);
+}
 export function addRack(root, W, x, z, ry, kind = 'srv') {
+  const real = machine('rack', { dims: [0.6, 2.0, 1.0] });
+  if (real) {
+    real.position.set(x, 0, z); real.rotation.y = ry;
+    const leds = new THREE.Mesh(new THREE.PlaneGeometry(0.5, 1.75), ledMat(kind, W));
+    leds.position.set(0, 1.02, 0.515); real.add(leds);
+    root.add(real);
+    return real;
+  }
   const r = new THREE.Mesh(RACK_GEO, rackMats(kind, W));
   r.position.set(x, 1.0, z); r.rotation.y = ry;
   root.add(r);

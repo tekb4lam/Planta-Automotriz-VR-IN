@@ -13,8 +13,15 @@ const MODELS = {
   wetSign: 'wetfloorsign_01.glb', cam: 'security_camera_01.glb', ubox: 'utility_box_01.glb', weldCart: 'portable_welding_cart.glb',
 };
 // Personajes por rol (Meshy AI u otro rig Mixamo). Si un archivo no existe se usa el personaje de respaldo.
-export const ROLE_FILES = { linea: 'rol_linea.glb', mantenimiento: 'rol_mantenimiento.glb', calidad: 'rol_calidad.glb', sala: 'rol_sala_control.glb', oficina: 'rol_oficina.glb', supervisor: 'rol_supervisor.glb' };
-const ROLE_FALLBACK = { mantenimiento: 'linea' };
+// Un rol puede tener varias variantes (se reparten en orden entre las personas de ese rol).
+export const ROLE_FILES = {
+  linea: ['rol_linea.glb'], mantenimiento: ['rol_mantenimiento.glb'], calidad: ['rol_calidad.glb'],
+  sala: ['rol_sala_control_1.glb', 'rol_sala_control_2.glb', 'rol_sala_control.glb'], oficina: ['rol_oficina.glb'], supervisor: ['rol_supervisor.glb'],
+};
+// Si falta un rol se usa otro (p. ej. sin rol_linea.glb los operarios de línea usan a Paco de mantenimiento).
+const ROLE_FALLBACK = { linea: 'mantenimiento', mantenimiento: 'linea', supervisor: 'calidad', oficina: 'supervisor' };
+// Equipos generados con Meshy AI (malla única texturizada). Si falta alguno se usa la versión procedural.
+const MACHINES = { prensa: 'prensa.glb', agv: 'agv.glb', montacargas: 'montacargas.glb', rack: 'rack_servidores.glb', tablero: 'tablero_plc.glb' };
 const TEX = ['floor', 'wall', 'roof', 'press', 'plate', 'panel'];
 
 export async function loadAssets(renderer, onProgress) {
@@ -31,18 +38,54 @@ export async function loadAssets(renderer, onProgress) {
       A.tex[n + '_' + s] = t;
     }).catch(() => {}));
   }
-  A.roles = {};
-  for (const [role, f] of Object.entries(ROLE_FILES)) jobs.push(gl.loadAsync(BASE + 'models/' + f).then((g) => (A.roles[role] = g)).catch(() => {}));
+  A.roles = {}; A.roleVariants = {}; A.mach = {};
+  const variants = {};
+  for (const [role, files] of Object.entries(ROLE_FILES)) {
+    variants[role] = [];
+    files.forEach((f, i) => jobs.push(gl.loadAsync(BASE + 'models/' + f).then((g) => (variants[role][i] = g)).catch(() => {})));
+  }
+  for (const [k, f] of Object.entries(MACHINES)) jobs.push(gl.loadAsync(BASE + 'models/' + f).then((g) => (A.mach[k] = prepMachine(g.scene))).catch(() => {}));
   for (const j of ['robot_paths', 'kr210', 'irb5400']) jobs.push(fetch(BASE + 'models/' + j + '.json').then((r) => r.json()).then((d) => (A[j + 'Info'] = d)).catch(() => {}));
   jobs.push(new RGBELoader(mgr).loadAsync(BASE + 'textures/env.hdr').then((h) => {
     const pm = new THREE.PMREMGenerator(renderer);
     A.env = pm.fromEquirectangular(h).texture; h.dispose(); pm.dispose();
   }).catch(() => {}));
   await Promise.all(jobs);
-  for (const [r, fb] of Object.entries(ROLE_FALLBACK)) if (!A.roles[r] && A.roles[fb]) A.roles[r] = A.roles[fb];
+  for (const [r, v] of Object.entries(variants)) { const ok = v.filter(Boolean); if (ok.length) { A.roles[r] = ok[0]; A.roleVariants[r] = ok; } }
+  for (const [r, fb] of Object.entries(ROLE_FALLBACK)) if (!A.roles[r] && A.roles[fb]) { A.roles[r] = A.roles[fb]; A.roleVariants[r] = A.roleVariants[fb]; }
   A.ok = !!(A.kr210 && A.irb5400 && A.carHi && A.robot_pathsInfo && A.kr210Info);
   if (A.carHi) A.car = { hi: buildCarParts(A.carHi.scene), lo: A.carLo ? buildCarParts(A.carLo.scene) : null };
   return A;
+}
+
+// ---------------- Equipos Meshy: normaliza materiales y entrega clones escalados ----------------
+function prepMachine(scene) {
+  scene.updateMatrixWorld(true);
+  scene.traverse((o) => {
+    if (!o.isMesh) return;
+    const m = o.material;
+    m.metalness = Math.min(m.metalness ?? 0, 0.2); m.roughness = Math.max(m.roughness ?? 1, 0.72);
+    m.side = THREE.DoubleSide;
+    if (m.map) { m.map.anisotropy = 4; m.map.colorSpace = THREE.SRGBColorSpace; }
+  });
+  return { scene, box: new THREE.Box3().setFromObject(scene) };
+}
+// machine('prensa', { height }) o { length } o { dims: [x, y, z] } (escala no uniforme).
+// Devuelve un Group con la base en y=0 y centrado en x/z; userData.toW(mx,my,mz) convierte coords del modelo.
+export function machine(k, o = {}) {
+  const R = A.mach && A.mach[k];
+  if (!R) return null;
+  const size = R.box.getSize(new THREE.Vector3()), c = R.box.getCenter(new THREE.Vector3());
+  let sx, sy, sz;
+  if (o.dims) { sx = o.dims[0] / size.x; sy = o.dims[1] / size.y; sz = o.dims[2] / size.z; }
+  else { const s = o.height ? o.height / size.y : o.length ? o.length / size.x : 1; sx = sy = sz = s; }
+  const inner = R.scene.clone(true);
+  inner.scale.set(sx, sy, sz);
+  inner.position.set(-c.x * sx, -R.box.min.y * sy, -c.z * sz);
+  const g = new THREE.Group(); g.add(inner);
+  g.userData.size = new THREE.Vector3(size.x * sx, size.y * sy, size.z * sz);
+  g.userData.toW = (mx, my, mz) => new THREE.Vector3((mx - c.x) * sx, (my - R.box.min.y) * sy, (mz - c.z) * sz);
+  return g;
 }
 
 // Material PBR con texturas de Poly Haven (UV en metros: repeat = 1/tamaño de mosaico)

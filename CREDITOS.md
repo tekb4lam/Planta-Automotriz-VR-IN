@@ -8,7 +8,9 @@ Uso **no comercial** (concientización en ciberseguridad OT). Todos los recursos
 | KUKA KR 210 L150 (`assets/models/kr210.glb`) | Robots de soldadura de punto y manipulación | ROS-Industrial `kuka_experimental` – https://github.com/ros-industrial/kuka_experimental | BSD |
 | ABB IRB 5400 (`assets/models/irb5400.glb`) | Robots de pintura | ROS-Industrial `abb` – https://github.com/ros-industrial/abb | Apache-2.0 |
 | Car Concept (`car_hi.glb`, `car_lo.glb`) | Carrocerías en todas las etapas | Eric Chadwick, Khronos glTF Sample Assets – https://github.com/KhronosGroup/glTF-Sample-Assets/tree/main/Models/CarConcept (basado en un modelo CC0 de "Unity Fan") | CC BY 4.0 |
-| Operario "Paco" (`rol_linea.glb`) | Operarios de ensamble y personal que camina por los pasillos | Generado por Michel Loranca con Meshy AI | Propio |
+| Operario "Paco" (`rol_mantenimiento.glb`) | Técnicos de mantenimiento (y operarios de línea mientras no exista `rol_linea.glb`) | Generado por Michel Loranca con Meshy AI | Propio |
+| Personajes `rol_calidad.glb`, `rol_supervisor.glb`, `rol_oficina.glb`, `rol_sala_control_1.glb`, `rol_sala_control_2.glb` | Inspectores, supervisor, personal de TI y operadores de sala de control | Generados por Michel Loranca con Meshy AI | Propio |
+| Equipos `prensa.glb`, `montacargas.glb`, `agv.glb`, `rack_servidores.glb`, `tablero_plc.glb` | Prensas de estampado (marco; el carro se anima por código), montacargas, AGV remolcador, racks de TI/OT y gabinetes PLC | Generados por Michel Loranca con Meshy AI | Propio |
 | Personaje con esqueleto (`worker.glb`) | Operarios (casco y chaleco añadidos por código) | Personaje Mixamo de los ejemplos de three.js – https://github.com/mrdoob/three.js/tree/dev/examples/models/gltf | Términos de Mixamo (Adobe) |
 | Texturas PBR: concreto de hangar, lámina perfilada, lámina corrugada, placa azul, placa antiderrapante, panel metálico | Piso, muros, techo, prensas, plataforma, cabina y horno | Poly Haven – https://polyhaven.com/textures | CC0 |
 | HDRI `empty_warehouse_01` | Iluminación y reflejos | Poly Haven – https://polyhaven.com/a/empty_warehouse_01 | CC0 |
@@ -39,18 +41,30 @@ Sí sirven. Recomendaciones para que se integren sin retrabajo:
 - **Máquinas con partes móviles (prensas, robots, puertas):** genera **cada pieza móvil por separado**
   (p. ej. marco de prensa y carro/slide). Si viene en una sola malla, se puede cortar por planos, pero queda mejor separada.
 - **Mobiliario y equipo estático (escritorios, racks, consolas):** una sola malla está bien.
-- **Tamaño:** cualquier resolución; aquí se simplifica a ~5–25 mil triángulos y texturas de 512–1024 px con `optimize.mjs`.
+- **Tamaño:** cualquier resolución; aquí se simplifica a ~3–22 mil triángulos y texturas de 1024 px.
+  Las mallas de Meshy tienen muchas costuras de UV, por eso se simplifican con `tools/texdec.py` (PyMeshLab, respeta la textura):
+  `python3 tools/texdec.py entrada.glb /tmp/sal.glb 6000 && node optimize.mjs /tmp/sal.glb assets/models/salida.glb 1 '{"tex":1024}'`.
 
 ### Archivos por rol (se cargan solos si existen en `assets/models/`)
 
 | Archivo | Rol | Si no existe se usa |
 |---|---|---|
-| `rol_linea.glb` | Operarios de ensamble y pasillos | personaje de respaldo con overol pintado |
-| `rol_mantenimiento.glb` | Técnicos que caminan por la nave | `rol_linea.glb` |
+| `rol_linea.glb` | Operarios de ensamble y pasillos | `rol_mantenimiento.glb` (Paco) |
+| `rol_mantenimiento.glb` | Técnicos que caminan por la nave (Paco) | `rol_linea.glb` |
 | `rol_calidad.glb` | Inspectores de calidad | respaldo con polo |
-| `rol_sala_control.glb` | Operadores sentados en sala de control | respaldo con polo y diadema |
-| `rol_supervisor.glb` | Supervisor de pie en sala de control | respaldo con camisa |
-| `rol_oficina.glb` | Personal de TI (incluida la víctima del phishing) | respaldo con camisa |
+| `rol_sala_control_1.glb`, `rol_sala_control_2.glb` | Operadores sentados en sala de control (se alternan) | respaldo con polo y diadema |
+| `rol_supervisor.glb` | Supervisor de pie en sala de control | `rol_calidad.glb` |
+| `rol_oficina.glb` | Personal de TI (incluida la víctima del phishing) | `rol_supervisor.glb` |
+
+### Equipos (opcionales; si faltan se usa la versión procedural)
+
+| Archivo | Uso | Orientación esperada |
+|---|---|---|
+| `prensa.glb` | Marco de las 5 prensas (5–6.9 m); la ventana del carro va recortada y el carro se anima por código | frente en +Z |
+| `montacargas.glb` | Montacargas estacionados en almacén | horquillas hacia −X |
+| `agv.glb` | Flota de 6 AGV (tractor + carro, ~3.2 m) | frente hacia −X |
+| `rack_servidores.glb` | Racks de sala de control, oficina TI y firewall (los LEDs se añaden encima) | frente en +Z |
+| `tablero_plc.glb` | Gabinetes PLC de cada línea (LED de estado y etiqueta encima) | frente en +Z |
 
 Animaciones que se aprovechan si vienen en el GLB: *Walking*, *Running*, *Idle* y *Typing/Sitting*. Las poses de trabajo,
 sentado y alarma se generan por código para cualquier esqueleto Mixamo.

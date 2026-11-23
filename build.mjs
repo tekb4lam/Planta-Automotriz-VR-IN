@@ -6,5 +6,5 @@ const html = fs.readFileSync('template.html', 'utf8').replace('/*__BUNDLE__*/', 
 fs.mkdirSync('dist', { recursive: true });
 fs.writeFileSync('dist/planta-automotriz-vr.html', html);
 fs.writeFileSync('index.html', html); // GitHub Pages
-fs.cpSync('assets', 'dist/assets', { recursive: true }); // copia local para pruebas
+fs.cpSync('assets', 'dist/assets', { recursive: true });
 console.log('OK', (html.length / 1024).toFixed(0) + ' KB');

@@ -19,7 +19,7 @@ if (+ratio < 1) steps.push(weld({ tolerance: 0.0001 }), simplify({ simplifier: M
 steps.push(prune({ keepLeaves: !!o.keepLeaves }));
 if (root.listTextures().length) steps.push(textureCompress({ encoder: sharp, targetFormat: 'webp', resize: [o.tex ?? 512, o.tex ?? 512], quality: 80 }));
 if (o.anim) steps.push(resample());
-steps.push(meshoptFn({ encoder: MeshoptEncoder, level: 'medium' }));
+if (!o.nocompress) steps.push(meshoptFn({ encoder: MeshoptEncoder, level: 'medium' }));
 await doc.transform(...steps);
 await io.write(out, doc);
 console.log(out, 'tris', before, '->', tris(), (fs.statSync(out).size / 1024).toFixed(0) + ' KB');

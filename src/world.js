@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { B, LINE, PRESS, WALK, AGVP, ROOMS, PLATFORM, slotX, ZONES } from './config.js';
 import { Batcher, G, M, CanvasPanel, makeSign, rand, emissiveMat, FONT, roundRect, corrugatedTexture } from './util.js';
 import { S } from './state.js';
-import { A } from './assets.js';
+import { A, machine } from './assets.js';
 import { buildControlRoom, buildITOffice, addRack } from './interiors.js';
 
 export function buildWorld(scene) {
@@ -134,7 +134,11 @@ export function buildWorld(scene) {
   // ---------- Almacén (racks instanciados) ----------
   buildRacks(root);
   // montacargas estacionados
-  for (const [x, z, r] of [[-60, 34, 0], [20, 34.2, Math.PI], [70, 42.7, 0.3]]) forklift(sb, x, z, r);
+  for (const [x, z, r] of [[-60, 34, 0], [20, 34.2, Math.PI], [70, 42.7, 0.3]]) {
+    const f = machine('montacargas', { length: 2.7 });
+    if (f) { f.position.set(x, 0, z); f.rotation.y = r + Math.PI; root.add(f); } // modelo Meshy: frente (horquillas) en -x
+    else forklift(sb, x, z, r);
+  }
 
   // ---------- Oficinas IT ----------
   const O = ROOMS.office;
@@ -211,14 +215,21 @@ export function buildWorld(scene) {
   // ---------- Gabinetes PLC ----------
   const cab = (id, x, z, ry = 0) => {
     const g = new THREE.Group(); g.position.set(x, 0, z); g.rotation.y = ry;
-    const body = new THREE.Mesh(G.box, M.cabinet); body.scale.set(1.8, 2.1, 0.6); body.position.y = 1.15; g.add(body);
-    const plinth = new THREE.Mesh(G.box, M.darkSteel); plinth.scale.set(1.8, 0.1, 0.6); plinth.position.y = 0.05; g.add(plinth);
-    const seam = new THREE.Mesh(G.box, M.darkSteel); seam.scale.set(0.02, 2.0, 0.62); seam.position.y = 1.15; g.add(seam);
     const led = emissiveMat(0x22ff55, 2.5);
-    const l = new THREE.Mesh(G.sphere, led); l.scale.setScalar(0.05); l.position.set(0.6, 1.95, 0.31); g.add(l);
+    const real = machine('tablero', { height: 2.3 });
+    let fz = 0.31, ly = 1.95, ty = 1.85, tx = -0.3;
+    if (real) {
+      // tablero de Meshy (frente +z); LED de estado y etiqueta sobre su puerta
+      g.add(real); fz = real.userData.size.z / 2 + 0.01; ly = 1.78; ty = 1.62; tx = -0.25;
+    } else {
+      const body = new THREE.Mesh(G.box, M.cabinet); body.scale.set(1.8, 2.1, 0.6); body.position.y = 1.15; g.add(body);
+      const plinth = new THREE.Mesh(G.box, M.darkSteel); plinth.scale.set(1.8, 0.1, 0.6); plinth.position.y = 0.05; g.add(plinth);
+      const seam = new THREE.Mesh(G.box, M.darkSteel); seam.scale.set(0.02, 2.0, 0.62); seam.position.y = 1.15; g.add(seam);
+    }
+    const l = new THREE.Mesh(G.sphere, led); l.scale.setScalar(0.06); l.position.set(real ? 0.42 : 0.6, ly, fz); g.add(l);
     const tag = makeSign(['PLC · ' + ({ plc_press: 'PRENSAS', plc_biw: 'CARROCERÍA', plc_paint: 'PINTURA', plc_oven: 'HORNO', plc_asm: 'ENSAMBLE', plc_qc: 'CALIDAD' }[id])], 0.9, { w: 512, h: 128, bg: '#ffffff', fg: '#111', sizes: [60] });
-    tag.position.set(-0.3, 1.85, 0.305); g.add(tag);
-    const hmi = new THREE.Mesh(G.box, M.screenOff); hmi.scale.set(0.38, 0.26, 0.03); hmi.position.set(0.45, 1.5, 0.31); g.add(hmi);
+    tag.position.set(tx, ty, fz); if (real) tag.scale.setScalar(0.7); g.add(tag);
+    if (!real) { const hmi = new THREE.Mesh(G.box, M.screenOff); hmi.scale.set(0.38, 0.26, 0.03); hmi.position.set(0.45, 1.5, 0.31); g.add(hmi); }
     root.add(g);
     W.cabinets[id] = { g, led };
     W.nodes[id] = new THREE.Vector3(x, 2.25, z);

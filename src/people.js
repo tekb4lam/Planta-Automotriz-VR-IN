@@ -305,8 +305,11 @@ export class MeshyWorker {
 }
 
 // Crea una persona para un rol: modelo de Meshy si existe, si no el personaje de respaldo con uniforme pintado.
+const _turn = {};
 export function makePerson(scene, role, x, z, yaw, fallback = {}) {
-  const g = A.roles && A.roles[role];
+  const vs = A.roleVariants && A.roleVariants[role];
+  let g = A.roles && A.roles[role];
+  if (vs && vs.length > 1) { const i = fallback.variant ?? (_turn[role] = (_turn[role] ?? -1) + 1); g = vs[i % vs.length]; }
   if (g) return new MeshyWorker(scene, x, z, yaw, g, { seated: fallback.seated });
   return new RealWorker(scene, x, z, yaw, fallback.vest ?? null, fallback.helmet ?? null, fallback);
 }

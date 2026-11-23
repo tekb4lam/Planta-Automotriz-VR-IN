@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { PRESS } from './config.js';
 import { Batcher, G, M, smooth, rand, makeSign } from './util.js';
 import { S } from './state.js';
+import { machine } from './assets.js';
 
 // Línea tándem de 5 prensas con transfer de láminas
 export class PressLine {
@@ -14,10 +15,55 @@ export class PressLine {
     const red = new THREE.MeshBasicMaterial({ color: 0xff2a2a, toneMapped: false });
     const hmiScr = new THREE.MeshBasicMaterial({ color: 0x2a6fd6, toneMapped: false });
     const white = new THREE.MeshStandardMaterial({ color: 0xe4e7ea, metalness: 0.3, roughness: 0.45 });
+    // Prensa de Meshy (marco con ventana recortada) + carro procedural animado; si no existe, prensa procedural.
+    const probe = machine('prensa', { height: 6.9 });
+    this.real = !!probe;
+    this.bedY = 1.33; this.off = 0;
+    let win = null;
+    if (this.real) {
+      const tw = probe.userData.toW;
+      const a = tw(-0.24, -0.35, -0.40), b = tw(0.44, 0.42, 0.53);
+      win = { x0: a.x, x1: b.x, y0: a.y, y1: b.y, zb: a.z, zf: b.z, cx: (a.x + b.x) / 2 };
+      this.bedY = a.y + 0.02; this.off = win.cx;
+      this.TDC = win.y1 - 0.45; this.BDC = this.bedY + 0.97;
+    }
     PRESS.xs.forEach((x, pi) => {
       // ---- cimentación y fosa ----
       sb.box(7.6, 0.03, 6.4, M.plate, x, 0.015, z);
       sb.box(7.6, 0.03, 0.12, M.hazard, x, 0.03, z + 3.2); sb.box(7.6, 0.03, 0.12, M.hazard, x, 0.03, z - 3.2);
+      if (this.real) {
+        const m = pi === 0 ? probe : machine('prensa', { height: 6.9 });
+        m.position.set(x, 0, z); scene.add(m);
+        const cx = x + win.cx, w = win.x1 - win.x0, h = win.y1 - win.y0, d = win.zf - win.zb;
+        // interior oscuro de la ventana (fondo, laterales y techo) para ocultar el recorte
+        sb.box(w, h, 0.08, M.pressDark, cx, (win.y0 + win.y1) / 2 + 0.1, z + win.zb);
+        for (const sx of [-1, 1]) sb.box(0.08, h, d, M.pressDark, cx + sx * (w / 2 - 0.02), (win.y0 + win.y1) / 2 + 0.1, z + (win.zb + win.zf) / 2);
+        sb.box(w, 0.1, d, M.pressDark, cx, win.y1 - 0.02, z + (win.zb + win.zf) / 2);
+        // troquel inferior sobre la mesa
+        sb.box(w - 0.4, 0.14, d * 0.7, M.darkSteel, cx, this.bedY + 0.07, z);
+        for (const dx of [-1, 1]) sb.box(0.1, 0.16, d * 0.7, M.yellow, cx + dx * (w / 2 - 0.25), this.bedY + 0.08, z);
+        // cortinas de luz, HMI con paro de emergencia y unidad hidráulica
+        for (const dx of [-1, 1]) {
+          sb.box(0.06, 1.8, 0.06, M.yellow, cx + dx * (w / 2 + 0.15), 1.9 + this.bedY - 1.33, z + win.zf + 0.25);
+          sb.box(0.012, 1.6, 0.02, red, cx + dx * (w / 2 + 0.12), 1.9 + this.bedY - 1.33, z + win.zf + 0.25);
+        }
+        sb.box(0.5, 1.3, 0.35, M.cabinet, x + 3.0, 0.65, z + 3.4);
+        sb.box(0.42, 0.3, 0.02, hmiScr, x + 3.0, 1.15, z + 3.58);
+        sb.cyl(0.05, 0.05, red, x + 3.15, 0.85, z + 3.6, Math.PI / 2);
+        sb.box(1.6, 1.2, 1.0, M.cabinetDark, x - 2.0, 0.6, z - 3.0);
+        // carro (slide) con troquel superior
+        const slide = new THREE.Group();
+        const s1 = new THREE.Mesh(G.box, white); s1.scale.set(w - 0.2, 0.75, d * 0.75); slide.add(s1);
+        const s1b = new THREE.Mesh(G.box, M.pressDark); s1b.scale.set(w - 0.18, 0.08, d * 0.75 + 0.02); s1b.position.y = 0.2; slide.add(s1b);
+        const s2 = new THREE.Mesh(G.box, M.pressDark); s2.scale.set(w - 0.5, 0.3, d * 0.65); s2.position.y = -0.52; slide.add(s2);
+        for (const dx of [-1, 1]) { const yb = new THREE.Mesh(G.box, M.yellow); yb.scale.set(0.1, 0.26, d * 0.65); yb.position.set(dx * (w / 2 - 0.3), -0.52, 0); slide.add(yb); }
+        for (const dz of [-0.5, 0.5]) { const rod = new THREE.Mesh(G.cyl, M.rim); rod.scale.set(0.14, 2.0, 0.14); rod.position.set(0, 1.3, dz); slide.add(rod); }
+        slide.position.set(cx, this.TDC, z);
+        scene.add(slide);
+        this.presses.push({ x, sx: cx, slide, stuck: false });
+        (this.plates = this.plates || []).push([x, pi]);
+        return;
+      }
       // ---- bancada inferior y mesa móvil (bolster) con rieles de cambio rápido ----
       sb.box(6.6, 1.0, 4.4, M.pressBlue, x, 0.5, z);
       sb.box(5.0, 0.15, 3.4, M.steel, x, 1.075, z);
@@ -68,13 +114,13 @@ export class PressLine {
       for (const dz of [-0.8, 0.8]) { const rod = new THREE.Mesh(G.cyl, M.rim); rod.scale.set(0.16, 3.0, 0.16); rod.position.set(0, 1.9, dz); slide.add(rod); }
       slide.position.set(x, this.TDC, z);
       scene.add(slide);
-      this.presses.push({ x, slide, stuck: false });
+      this.presses.push({ x, sx: x, slide, stuck: false });
       this.plates = this.plates || [];
       this.plates.push([x, pi]);
     });
     // transfer: rieles longitudinales sobre la línea (barras de alimentación)
     const xa = PRESS.xs[0] - 9, xb = PRESS.xs[PRESS.xs.length - 1] + 7.5;
-    for (const dz of [-1.25, 1.25]) sb.box(xb - xa, 0.18, 0.12, M.steel, (xa + xb) / 2, 3.2, z + dz);
+    for (const dz of [-1.25, 1.25]) sb.box(xb - xa, 0.18, 0.12, M.steel, (xa + xb) / 2, this.real ? this.bedY + 1.15 : 3.2, z + dz);
     // pasarela posterior a nivel de coronas
     sb.box(xb - xa, 0.08, 1.2, M.plate, (xa + xb) / 2, 9.25, z - 3.1);
     sb.box(xb - xa, 0.05, 0.05, M.yellow, (xa + xb) / 2, 10.3, z - 3.7);
@@ -118,7 +164,9 @@ export class PressLine {
     // placas de identificación en las coronas
     this.plates.forEach(([x, pi]) => {
       const sign = makeSign(['PRENSA ' + (pi + 1), pi === 0 ? 'Embutido · 2,400 t' : 'Servoprensa · 1,000 t'], 2.6, { w: 768, h: 256, bg: '#e4e7ea', fg: '#1d3557', stripe: '#f2c200' });
-      sign.position.set(x, 8.35, PRESS.z + 2.42); scene.add(sign);
+      if (this.real) sign.position.set(x + this.off, win.y1 + 0.75, PRESS.z + win.zf + 0.12);
+      else sign.position.set(x, 8.35, PRESS.z + 2.42);
+      scene.add(sign);
     });
     this.t = 0;
     this.cycle = PRESS.cycle;
@@ -136,7 +184,7 @@ export class PressLine {
     S.pressStopped = true;
     const p = this.presses[idx];
     p.stuck = true;
-    const pos = new THREE.Vector3(p.x, 1.6, PRESS.z + 1.6);
+    const pos = new THREE.Vector3(p.sx, this.bedY + 0.3, PRESS.z + 1.6);
     this.fx.sparks.emit(pos, 260, new THREE.Color(1, 0.7, 0.25), 5, 1.2, null, 1.2);
     this.audio?.crash(pos);
     this.crashPos = pos;
@@ -155,7 +203,7 @@ export class PressLine {
     for (const p of this.presses) {
       const y = p.stuck ? this.BDC - 0.05 : this.TDC - (this.TDC - this.BDC) * off;
       p.slide.position.y = y;
-      p.slide.position.x = p.x + (this.shake && !S.pressStopped ? rand(-1, 1) * this.shake : 0);
+      p.slide.position.x = p.sx + (this.shake && !S.pressStopped ? rand(-1, 1) * this.shake : 0);
     }
     // golpe en punto muerto inferior
     if (!S.pressStopped && this.lastPhase < 0.225 && u >= 0.225) this.audio?.thump(new THREE.Vector3(PRESS.xs[2], 1, PRESS.z));
@@ -163,18 +211,21 @@ export class PressLine {
     // transfer de láminas
     const v = press ? 0 : smooth((u - 0.45) / 0.55);
     const lift = press ? 0 : Math.sin(Math.PI * (u - 0.45) / 0.55);
-    const xs = [PRESS.xs[0] - 9, ...PRESS.xs, PRESS.xs[n - 1] + 7.5];
+    const xs = [PRESS.xs[0] - 9, ...PRESS.xs.map((x) => x + this.off), PRESS.xs[n - 1] + 7.5];
+    const bed = this.bedY + (this.real ? 0.22 : 0.15), hop = this.real ? 0.6 : 0.9;
     for (let i = 0; i <= n; i++) {
       const s = this.sheets[i];
       const a = xs[i], b = xs[i + 1];
-      const x = press || S.pressStopped ? a : a + (b - a) * v;
-      s.position.set(x, (i === 0 ? 1.0 : 1.48) + 0.9 * lift * (S.pressStopped ? 0 : 1), PRESS.z);
+      const moving = !(press || S.pressStopped);
+      const x = moving ? a + (b - a) * v : a;
+      const ya = i === 0 ? 1.0 : bed, yb = i === n ? 1.0 : bed;
+      s.position.set(x, (moving ? ya + (yb - ya) * v : ya) + hop * lift * (S.pressStopped ? 0 : 1), PRESS.z);
       s.scale.y = i === 0 ? 0.03 : 0.16;
-      if (S.pressStopped && i === 3) { s.rotation.z = 0.5; s.position.y = 1.8; }
+      if (S.pressStopped && i === 3) { s.rotation.z = 0.5; s.position.y = bed + 0.35; }
       else s.rotation.z = 0;
       const bar = this.bars[i];
-      bar.position.set(s.position.x, Math.max(s.position.y + 0.2, 1.75), PRESS.z);
-      bar.visible = !(S.pressStopped && i === 3);
+      bar.position.set(s.position.x, Math.max(s.position.y + 0.2, this.real ? bed + 0.35 : 1.75), PRESS.z);
+      bar.visible = !(S.pressStopped && i === 3) && !(this.real && press);
     }
     if (S.pressStopped && this.crashPos && Math.random() < dt * 6) {
       this.fx.smoke.emit(this.crashPos, 0x3a3a3a, 1.6, 6, 0.9);
