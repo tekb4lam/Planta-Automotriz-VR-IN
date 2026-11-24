@@ -76,3 +76,7 @@ sentado y alarma se generan por código para cualquier esqueleto Mixamo.
 - **Guion:** `tools/narracion.json` (intro, un clip por paso, clip de bloqueo cuando las defensas están activas y cierre con "cómo se evitaba").
 - **Regenerar:** `XI_API_KEY=tu_clave python3 tools/gen_audio.py` (usa `--only clip1,clip2 --force` para rehacer clips concretos). La clave se lee solo de la variable de entorno; nunca se guarda en el repositorio.
 - **En la app:** Opciones → "Narradora y efectos de los escenarios". Con la narradora activa, cada paso del escenario espera a que termine la frase anterior; el ruido ambiente baja mientras habla.
+
+## Controles en VR
+
+- Modelos de los controles Meta Quest Touch Plus (Quest 3), Touch Plus v2, Touch v3 (Quest 2) y genérico: **WebXR Input Profiles** (Amazon / W3C Immersive Web, licencia MIT), servidos localmente desde `assets/xr-profiles/`. three.js `XRControllerModelFactory` elige el modelo según el perfil que reporta el visor y anima gatillo, grip, botones y joystick.

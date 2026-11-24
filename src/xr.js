@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { XRControllerModelFactory } from 'three/examples/jsm/webxr/XRControllerModelFactory.js';
 import { B, PLATFORM, ROOMS } from './config.js';
 import { S } from './state.js';
 import { clamp } from './util.js';
@@ -29,17 +30,23 @@ export class Player {
   setupControllers() {
     const r = this.renderer;
     this.ctrl = [];
+    this.ctrlFactory = new XRControllerModelFactory();
+    this.ctrlFactory.setPath('./assets/xr-profiles');
     for (let i = 0; i < 2; i++) {
       const c = r.xr.getController(i), g = r.xr.getControllerGrip(i);
       this.dolly.add(c); this.dolly.add(g);
       const info = { c, g, hand: null, src: null };
+      // modelo real del control según el perfil WebXR del dispositivo (Quest 3 → meta-quest-touch-plus),
+      // con botones, gatillos y joystick animados; se sirve desde assets/xr-profiles (sin depender de la CDN)
+      info.model = this.ctrlFactory.createControllerModel(g);
+      g.add(info.model);
       c.addEventListener('connected', (e) => { info.src = e.data; info.hand = e.data.handedness; this.attach(info); });
       c.addEventListener('disconnected', () => { info.src = null; info.hand = null; this.detach(info); });
       c.addEventListener('selectstart', () => this.onSelect(info));
       this.ctrl.push(info);
     }
-    // modelo simple de control
-    this.ctrlGeo = new THREE.Group();
+    // modelo simple de respaldo (solo se ve si no carga el modelo del perfil)
+    this.ctrlGeo = new THREE.Group(); this.ctrlGeo.name = 'ctrl-fallback';
     const body = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.024, 0.11, 12), new THREE.MeshStandardMaterial({ color: 0x222831, roughness: 0.5 }));
     body.rotation.x = Math.PI / 2 - 0.5; body.position.set(0, -0.015, 0.04);
     const ring = new THREE.Mesh(new THREE.TorusGeometry(0.04, 0.006, 8, 24), new THREE.MeshStandardMaterial({ color: 0x38e1ff, emissive: 0x0a4a55, roughness: 0.4 }));
@@ -54,17 +61,18 @@ export class Player {
     this.scene.add(this.dot);
   }
   attach(info) {
-    info.g.add(this.ctrlGeo.clone());
+    info.fb = this.ctrlGeo.clone(); info.g.add(info.fb);
     if (info.hand === 'right') info.c.add(this.laser);
     if (info.hand === 'left') {
       const m = this.hud.tablet.mesh;
-      m.position.set(0, 0.075, -0.06); m.rotation.set(-Math.PI / 3.2, 0, 0);
+      m.position.set(0, 0.1, -0.06); m.rotation.set(-Math.PI / 3.2, 0, 0);
       info.g.add(m);
       m.visible = this.tabletVisible;
     }
   }
   detach(info) {
-    while (info.g.children.length) info.g.remove(info.g.children[0]);
+    for (const ch of [...info.g.children]) if (ch !== info.model) info.g.remove(ch);
+    info.fb = null;
     if (info.hand === 'right') info.c.remove(this.laser);
   }
   get right() { return this.ctrl.find((c) => c.hand === 'right' && c.src); }
@@ -178,6 +186,7 @@ export class Player {
 
   // ---------------- Bucle ----------------
   update(dt) {
+    for (const i of this.ctrl) if (i.fb && i.model.children.length) i.fb.visible = false; // ya cargó el control real
     const xr = this.renderer.xr.isPresenting;
     const head = this.camera.getWorldPosition(_o).clone();
     S.player.copy(head);
