@@ -10,6 +10,7 @@ import { Line } from './line.js';
 import { AGVFleet } from './agv.js';
 import { Network } from './network.js';
 import { Audio } from './audio.js';
+import { Narrator } from './narrator.js';
 import { ScenarioEngine, DEFS } from './scenarios.js';
 import { HUD } from './hud.js';
 import { Player } from './xr.js';
@@ -76,6 +77,7 @@ if (A.worker) for (const p of W.people) {
   staff.push(w);
 }
 const audio = new Audio();
+const narr = new Narrator(audio);
 const fx = {
   sparks: new Particles(scene, 1600, { size: 0.05, gravity: -9.8, drag: 0.6 }),
   mist: new Particles(scene, 1400, { size: 0.3, gravity: -0.4, drag: 1.6 }),
@@ -98,7 +100,7 @@ const SPECIAL = {
   ovenbox: new THREE.Vector3(55, 0, LINE.z),
 };
 const ctx = {
-  W, line, press, agv, net, fx, audio,
+  W, line, press, agv, net, fx, audio, narr,
   mark(key, text, color) {
     const p = SPECIAL[key] || W.nodes[key];
     if (!p) return;
@@ -159,6 +161,7 @@ const actions = {
   go: (l) => { player.teleportTo(l.x, l.y, l.z, l.yaw, l.pitch || 0); },
   nextLocation: () => { locIdx = (locIdx + 1) % LOCATIONS.length; actions.go(LOCATIONS[locIdx]); },
   sound: () => { S.sound = !S.sound; audio.init(); audio.setEnabled(S.sound); },
+  narration: () => { S.narration = !S.narration; audio.init(); if (!S.narration) narr.stop(); },
   click: () => audio.click(),
   audioInit: () => audio.init(),
   affected: () => line.bodies.filter((b) => b.defect && b.slot < 22).length,

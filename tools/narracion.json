@@ -1,0 +1,280 @@
+{
+  "_nota": "Guion de la narradora. Las etiquetas entre corchetes son Audio Tags de ElevenLabs (emoción/entonación). Generar con: XI_API_KEY=... python3 tools/gen_audio.py",
+  "voice_id": "twZzvyYIl5ntDHC1Vatv",
+  "voice_name": "Angelica (ElevenLabs, español mexicano)",
+  "model_id": "eleven_v4",
+  "sfx": {
+    "correo": {
+      "prompt": "new email notification chime followed by a single mouse click",
+      "dur": 2.0
+    },
+    "teclado": {
+      "prompt": "fast tense hacker typing on a mechanical keyboard, short",
+      "dur": 2.5
+    },
+    "intrusion": {
+      "prompt": "ominous digital network intrusion, sci-fi data beeps and low pulse",
+      "dur": 2.5
+    },
+    "bloqueo": {
+      "prompt": "security system access denied alert followed by a heavy digital shield lock clunk",
+      "dur": 2.0
+    },
+    "virus": {
+      "prompt": "ominous digital glitch corruption spreading, computer virus, distorted bleeps",
+      "dur": 3.0
+    },
+    "pantallas": {
+      "prompt": "several computer monitors glitching and turning off one by one, electrical buzz and error beeps",
+      "dur": 3.0
+    },
+    "apagado": {
+      "prompt": "large industrial factory machinery powering down, electric motors winding down to silence",
+      "dur": 4.0
+    },
+    "usb": {
+      "prompt": "laptop network cable plugged in, short connection chime",
+      "dur": 1.5
+    },
+    "descarga": {
+      "prompt": "ominous data upload, rapid digital progress beeps ending in a low tone",
+      "dur": 2.5
+    },
+    "robots": {
+      "prompt": "industrial robot arms with servo motors whirring erratically and welding sparks crackling",
+      "dur": 4.0
+    },
+    "alarma": {
+      "prompt": "industrial factory warning alarm, two short siren cycles",
+      "dur": 3.0
+    },
+    "prensa_rapida": {
+      "prompt": "heavy hydraulic stamping press slamming faster and faster, metallic impacts",
+      "dur": 4.0
+    },
+    "choque": {
+      "prompt": "massive steel crash inside a stamping press, metal crunching and grinding, debris",
+      "dur": 3.0
+    },
+    "wifi": {
+      "prompt": "hacking device scanning wireless networks, quick radar beeps and electronic chirps",
+      "dur": 2.5
+    },
+    "agv": {
+      "prompt": "electric warehouse robots accelerating out of control with warning beeps",
+      "dur": 3.0
+    },
+    "colision": {
+      "prompt": "metal carts colliding and crashing in a warehouse",
+      "dur": 2.0
+    },
+    "quemadores": {
+      "prompt": "industrial gas burners igniting and roaring louder and louder",
+      "dur": 3.0
+    },
+    "incendio": {
+      "prompt": "fire alarm bell ringing, evacuation alert in a factory",
+      "dur": 4.0
+    },
+    "tormenta": {
+      "prompt": "rising flood of digital noise, data packet storm, crackling static overload",
+      "dur": 4.0
+    },
+    "congelado": {
+      "prompt": "electronic signal lost tone with a screen freeze buzz",
+      "dur": 2.0
+    },
+    "intermitente": {
+      "prompt": "conveyor motors starting and stopping repeatedly with mechanical clunks",
+      "dur": 4.0
+    }
+  },
+  "scenarios": {
+    "ransomware": {
+      "intro": "[serious] Escenario uno: ransomware. [mysterious] Y todo empieza muy lejos de la línea de producción… en una oficina.",
+      "steps": [
+        {
+          "sfx": "correo",
+          "text": "[curious] Llega un correo urgente a la oficina de TI… [nervous] y alguien abre el adjunto. [whispers] Sin saberlo, le acaba de abrir la puerta al atacante."
+        },
+        {
+          "sfx": "teclado",
+          "text": "[tense] Con las credenciales robadas, el atacante salta por escritorio remoto… [worried] directo hacia la red industrial."
+        },
+        {
+          "sfx": "virus",
+          "text": "[alarmed] ¡El ransomware ya está en los servidores SCADA y MES! [fast] Y se propaga a las estaciones de la sala de control."
+        },
+        {
+          "sfx": "pantallas",
+          "text": "[shocked] Las pantallas se cifran, una tras otra… [frustrated] Los operadores se quedan ciegos: ya no pueden ver el proceso."
+        },
+        {
+          "sfx": "apagado",
+          "text": "[urgent] Sin órdenes de producción y sin supervisión, toda la planta se detiene por seguridad. [serious] Y cada minuto parado… es dinero que se pierde."
+        },
+        {
+          "text": "[somber] Recuperarse no es cuestión de horas. Hay que aislar la red, reconstruir servidores desde respaldos limpios y validar cada sistema. [sighs] Días… o semanas de paro."
+        }
+      ],
+      "gate": {
+        "sfx": "bloqueo",
+        "text": "[tense] El atacante intenta saltar a la red industrial por escritorio remoto… [relieved] ¡pero el firewall entre IT y OT lo bloquea! [confident] La segmentación y la autenticación multifactor dejan el incidente contenido en la oficina. [warmly] La planta sigue produciendo, como si nada."
+      },
+      "outro": "[thoughtful] ¿Cómo se evitaba? Separando IT de OT con una zona desmilitarizada, autenticación multifactor en cada acceso remoto… y respaldos fuera de línea, probados."
+    },
+    "robots": {
+      "intro": "[serious] Escenario dos: lógica alterada en los robots de soldadura.",
+      "steps": [
+        {
+          "sfx": "usb",
+          "text": "[casual] Un contratista llega a Carrocería y conecta su laptop a la red de mantenimiento [suspicious] para… «actualizar» un robot. Lo que no sabe es que su equipo está infectado."
+        },
+        {
+          "sfx": "descarga",
+          "text": "[tense] Desde esa laptop se descarga un programa modificado al PLC… y a los controladores de los robots."
+        },
+        {
+          "sfx": "robots",
+          "text": "[alarmed] ¡Los robots se salen de su trayectoria! [fast] Sueldan fuera de los puntos programados y rebasan su zona de seguridad."
+        },
+        {
+          "text": "[sarcastic] Pero en la sala de control… todo se ve perfecto. [serious] El HMI sigue diciendo «Carrocería OK», nadie detiene la línea, y cada carrocería sale con soldaduras defectuosas."
+        },
+        {
+          "sfx": "alarma",
+          "text": "[fearful] Y lo más grave: un robot fuera de su envolvente puede lesionar a cualquier técnico que entre a la celda."
+        },
+        {
+          "text": "[somber] Esas unidades llegarán a Calidad con soldaduras faltantes: scrap, retrabajo… [worried] y el riesgo de un recall de autos que ya están en la calle."
+        }
+      ],
+      "gate": {
+        "sfx": "bloqueo",
+        "text": "[tense] La laptop intenta descargar un programa alterado al PLC… [relieved] ¡Alto ahí! [confident] El control de acceso a la red aísla el equipo no registrado y el PLC rechaza cualquier programa sin firma. [pleased] El centro de operaciones de seguridad ya recibió la alerta."
+      },
+      "outro": "[thoughtful] La defensa: solo equipos registrados en la red, programas firmados con control de cambios, la llave del PLC en modo RUN… y un monitoreo que avise cuando alguien descarga lógica."
+    },
+    "press": {
+      "intro": "[serious] Escenario tres: comandos no autorizados a las prensas.",
+      "steps": [
+        {
+          "sfx": "teclado",
+          "text": "[mysterious] Una estación HMI de la sala de control ya está comprometida. [whispers] El atacante está dentro de la red de control."
+        },
+        {
+          "sfx": "descarga",
+          "text": "[tense] Envía comandos de escritura Modbus, un protocolo que no pide ninguna autenticación… directo al PLC de las prensas."
+        },
+        {
+          "sfx": "prensa_rapida",
+          "text": "[alarmed] ¡La velocidad se dispara! [fast] La prensa pasa de doce a cuarenta golpes por minuto, muy por fuera de su rango seguro."
+        },
+        {
+          "sfx": "choque",
+          "text": "[shouts] ¡Choque de troquel! [shocked] El transfer pierde la sincronía, la lámina se atasca… y el herramental se destroza. [worried] El personal está en peligro."
+        },
+        {
+          "text": "[concerned] Sin paneles estampados, Carrocería empieza a consumir su inventario… [serious] y reparar un troquel dañado puede tardar semanas."
+        },
+        {
+          "sfx": "apagado",
+          "text": "[somber] El inventario se agota. Carrocería… y el resto de la línea, se detienen."
+        }
+      ],
+      "gate": {
+        "sfx": "bloqueo",
+        "text": "[tense] El atacante envía comandos de escritura al PLC de las prensas… [relieved] ¡y se descartan! [confident] El firewall industrial inspecciona cada paquete y solo permite lecturas. La escritura se bloquea y se genera una alerta."
+      },
+      "outro": "[thoughtful] La lección: firewalls industriales que solo permitan lectura, protocolos con autenticación, límites de velocidad en hardware… y un sistema de seguridad independiente del control."
+    },
+    "agv": {
+      "intro": "[serious] Escenario cuatro: secuestro inalámbrico de los AGVs.",
+      "steps": [
+        {
+          "sfx": "wifi",
+          "text": "[mysterious] En un rincón del almacén, un dispositivo escondido escanea el Wi-Fi industrial. [concerned] La red está protegida con una sola clave… que conoce medio mundo."
+        },
+        {
+          "sfx": "intrusion",
+          "text": "[tense] El intruso se une a la red y suplanta al servidor de la flota. [whispers] Ahora, él da las órdenes."
+        },
+        {
+          "sfx": "agv",
+          "text": "[alarmed] ¡Los AGVs abandonan su ruta! [fast] Aceleran sin control por toda la nave."
+        },
+        {
+          "sfx": "colision",
+          "text": "[shouts] ¡Cuidado! [fearful] Invaden los pasillos peatonales y chocan entre sí. Hay riesgo directo para las personas."
+        },
+        {
+          "sfx": "apagado",
+          "text": "[somber] Sin material, Ensamble final se queda vacío… y la línea se detiene por falta de piezas."
+        }
+      ],
+      "gate": {
+        "sfx": "bloqueo",
+        "text": "[tense] El intruso intenta unirse a la red de los AGVs… [relieved] ¡Rechazado! [confident] Con WPA3 Enterprise y un certificado por dispositivo, ni siquiera logra conectarse. La red de AGVs está segmentada… y vigilada."
+      },
+      "outro": "[thoughtful] Para evitarlo: autenticación por certificado en el Wi-Fi, detección de equipos intrusos, una red exclusiva para los AGVs… y escáneres de seguridad que los frenen aunque la red falle."
+    },
+    "oven": {
+      "intro": "[serious] Escenario cinco: lecturas falsas en el horno de pintura.",
+      "steps": [
+        {
+          "sfx": "intrusion",
+          "text": "[mysterious] Un malware en el servidor SCADA se coloca, en silencio, entre el HMI y el PLC del horno."
+        },
+        {
+          "sfx": "descarga",
+          "text": "[tense] Intercepta los mensajes, falsifica la temperatura… [whispers] y sube la consigna de los quemadores."
+        },
+        {
+          "sfx": "quemadores",
+          "text": "[sarcastic] En la pantalla se ven ciento ochenta grados, perfectamente estables… [alarmed] Pero el termómetro del horno sube, y sube, sin control."
+        },
+        {
+          "text": "[disappointed] Las carrocerías salen con la pintura quemada. [sighs] Todo el lote… es scrap."
+        },
+        {
+          "sfx": "incendio",
+          "text": "[urgent] ¡Humo en el horno, en una zona llena de solventes inflamables! [shouts] Riesgo de incendio: se activa la evacuación y la planta se detiene."
+        }
+      ],
+      "gate": {
+        "sfx": "bloqueo",
+        "text": "[tense] El malware falsifica la temperatura y sube los quemadores… [relieved] ¡pero lo detectan! [confident] Los sensores redundantes notan la diferencia y el sistema de seguridad, independiente de la red, apaga los quemadores a tiempo."
+      },
+      "outro": "[thoughtful] La protección: mediciones redundantes con alarma por discrepancia, un sistema de seguridad independiente, mensajes de proceso autenticados… y alguien que revise el termómetro local."
+    },
+    "dos": {
+      "intro": "[serious] Escenario seis: denegación de servicio en la red OT.",
+      "steps": [
+        {
+          "sfx": "tormenta",
+          "text": "[concerned] Un equipo infectado en la red de control empieza a inundarla de tráfico… [tense] una auténtica tormenta."
+        },
+        {
+          "text": "[tense] Los switches y los enlaces de la red industrial se saturan."
+        },
+        {
+          "sfx": "congelado",
+          "text": "[alarmed] Los PLC pierden comunicación con el HMI y el SCADA. [frustrated] Pantallas congeladas… «sin comunicación»."
+        },
+        {
+          "sfx": "intermitente",
+          "text": "[tense] Robots y transportadores entran en paro seguro. [frustrated] La línea arranca… se detiene… arranca… y se vuelve a detener."
+        },
+        {
+          "sfx": "apagado",
+          "text": "[somber] Paro total. La línea queda detenida hasta restablecer la red."
+        }
+      ],
+      "gate": {
+        "sfx": "bloqueo",
+        "text": "[tense] La tormenta de tráfico golpea los switches industriales… [relieved] ¡y queda contenida! [confident] El control de tormentas, la calidad de servicio y la segmentación limitan el tráfico. [pleased] La red de control sigue respondiendo y la planta no se detiene."
+      },
+      "outro": "[thoughtful] La defensa: control de tormentas y calidad de servicio en los switches, redes redundantes en anillo… y monitoreo del tráfico OT para detectar lo anormal a tiempo."
+    }
+  }
+}

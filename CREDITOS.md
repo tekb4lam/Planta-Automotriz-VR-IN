@@ -68,3 +68,11 @@ Sí sirven. Recomendaciones para que se integren sin retrabajo:
 
 Animaciones que se aprovechan si vienen en el GLB: *Walking*, *Running*, *Idle* y *Typing/Sitting*. Las poses de trabajo,
 sentado y alarma se generan por código para cualquier esqueleto Mixamo.
+
+## Narración y efectos de sonido (ElevenLabs)
+
+- **Voz:** "Angelica" de la biblioteca de voces de ElevenLabs (español mexicano), modelo **Eleven v4** con *Audio Tags* de emoción (`[alarmed]`, `[relieved]`, `[whispers]`, …).
+- **Efectos:** generados con *Sound Effects* de ElevenLabs (correo, tecleo, virus, choque de troquel, alarma de incendio, tormenta de red, etc.).
+- **Guion:** `tools/narracion.json` (intro, un clip por paso, clip de bloqueo cuando las defensas están activas y cierre con "cómo se evitaba").
+- **Regenerar:** `XI_API_KEY=tu_clave python3 tools/gen_audio.py` (usa `--only clip1,clip2 --force` para rehacer clips concretos). La clave se lee solo de la variable de entorno; nunca se guarda en el repositorio.
+- **En la app:** Opciones → "Narradora y efectos de los escenarios". Con la narradora activa, cada paso del escenario espera a que termine la frase anterior; el ruido ambiente baja mientras habla.

@@ -103,15 +103,33 @@ export class ScenarioEngine {
     this.t = 0; this.idx = 0; this.log = []; this.blocked = false;
     S.ui.tab = 'escenario'; S.ui.sub = 'log'; S.ui.dirty = true;
     this.ctx.audio.alert();
+    // narradora: presenta el escenario y descarga sus audios
+    const n = this.ctx.narr;
+    if (n && S.narration) {
+      n.stop();
+      this.waitNarr = true; // espera a que cargue el guion de audio (normalmente ya está listo)
+      n.ready.then(() => {
+        if (this.active !== def) return;
+        this.waitNarr = false;
+        if (!n.on) return;
+        n.prefetch(id); const m = n.scen(id); if (m) n.say(m.intro);
+      });
+    } else this.waitNarr = false;
   }
-  stop() { this.active = null; S.scenario = null; this.log = []; S.ui.dirty = true; }
+  stop() { this.active = null; S.scenario = null; this.log = []; S.ui.dirty = true; this.ctx.narr?.stop(); }
   update(dt) {
     const a = this.active;
-    if (!a) return;
-    this.t += dt;
-    while (!this.blocked && this.idx < a.steps.length && this.t >= a.steps[this.idx].t) {
+    if (!a || this.waitNarr) return;
+    // con narradora activa, el siguiente paso espera a que termine de hablar
+    const n = this.ctx.narr, next = !this.blocked && a.steps[this.idx];
+    const hold = n && n.on && n.busy && next && this.t + dt >= next.t;
+    if (!hold) this.t += dt;
+    while (!hold && !this.blocked && this.idx < a.steps.length && this.t >= a.steps[this.idx].t) {
+      const i = this.idx;
       const st = a.steps[this.idx++];
+      const nm = n && n.on ? n.scen(a.id) : null;
       if (st.gate && S.defenses) {
+        if (nm && nm.gate) { n.sfx(nm.gate.sfx); n.say(nm.gate.voz); }
         st.run?.(this.ctx, true);
         this.blocked = true;
         this.log.push({ text: st.gate, kind: 'block', t: this.t });
@@ -120,6 +138,9 @@ export class ScenarioEngine {
       } else {
         st.run?.(this.ctx, false);
         this.log.push({ text: st.text, kind: st.kind || 'step', t: this.t });
+        const ns = nm && nm.steps[i];
+        if (ns) { n.sfx(ns.sfx); n.say(ns.voz); }
+        if (nm && this.idx >= a.steps.length) n.say(nm.outro); // cierre: cómo se evitaba
       }
       this.ctx.toast(a, this.log[this.log.length - 1]);
       S.ui.dirty = true;

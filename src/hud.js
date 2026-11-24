@@ -128,23 +128,24 @@ export class HUD {
       ['net', 'Capa de red OT (modelo Purdue)', S.showNetwork ? 'Visible' : 'Oculta', () => { S.showNetwork = !S.showNetwork; }, S.showNetwork],
       ['def2', 'Controles de seguridad (defensa en profundidad)', S.defenses ? 'ON' : 'OFF', () => { S.defenses = !S.defenses; }, S.defenses],
       ['snd', 'Sonido ambiente y alarmas', S.sound ? 'ON' : 'OFF', () => this.actions.sound(), S.sound],
+      ['nar', 'Narradora y efectos de los escenarios', S.narration ? 'ON' : 'OFF', () => this.actions.narration(), S.narration],
       ['spd', 'Velocidad de la simulación', '×' + S.simSpeed, () => { S.simSpeed = S.simSpeed === 1 ? 2 : S.simSpeed === 2 ? 4 : 1; }, S.simSpeed > 1],
       ['cst', 'Escala de impacto (costos y unidades)', S.timeScale === 1 ? 'Tiempo real' : '1 s = 1 min', () => { S.timeScale = S.timeScale === 1 ? 60 : 1; }, S.timeScale > 1],
     ];
     rows.forEach(([id, label, val, fn, on], i) => {
-      const y = y0 + i * 92;
-      this.btn('opt_' + id, 20, y, W - 40, 80, fn, (hov) => {
-        ctx.fillStyle = hov ? '#1d3447' : COL.panel; roundRect(ctx, 20, y, W - 40, 80, 14); ctx.fill();
-        ctx.fillStyle = '#fff'; ctx.font = `700 26px ${FONT}`; ctx.textAlign = 'left'; ctx.fillText(label, 44, y + 41, W - 330);
-        ctx.fillStyle = on ? COL.green : '#33485a'; roundRect(ctx, W - 260, y + 16, 216, 48, 24); ctx.fill();
-        ctx.fillStyle = '#fff'; ctx.font = `800 23px ${FONT}`; ctx.textAlign = 'center'; ctx.fillText(val, W - 152, y + 41);
+      const y = y0 + i * 71;
+      this.btn('opt_' + id, 20, y, W - 40, 62, fn, (hov) => {
+        ctx.fillStyle = hov ? '#1d3447' : COL.panel; roundRect(ctx, 20, y, W - 40, 62, 14); ctx.fill();
+        ctx.fillStyle = '#fff'; ctx.font = `700 24px ${FONT}`; ctx.textAlign = 'left'; ctx.fillText(label, 44, y + 32, W - 330);
+        ctx.fillStyle = on ? COL.green : '#33485a'; roundRect(ctx, W - 260, y + 9, 216, 44, 22); ctx.fill();
+        ctx.fillStyle = '#fff'; ctx.font = `800 22px ${FONT}`; ctx.textAlign = 'center'; ctx.fillText(val, W - 152, y + 32);
       });
     });
     ctx.fillStyle = COL.mute; ctx.font = `500 18px ${FONT}`; ctx.textAlign = 'left';
     ctx.fillText(`Costo de paro supuesto: USD ${fmt(COST_PER_MIN_USD)}/min · Producción nominal ${JPH} unidades/h (editable en el código).`, 20, H - 22, W - 40);
     ctx.font = `500 15px ${FONT}`; ctx.fillStyle = '#6f8ba0';
     ctx.fillText('Créditos: robots KUKA KR 210 y ABB IRB 5400 (ROS-Industrial, BSD/Apache-2.0) · "Car Concept" de Eric Chadwick (Khronos, CC BY 4.0)', 20, H - 70, W - 40);
-    ctx.fillText('Operario: personaje Mixamo (ejemplos de three.js) · Texturas, HDRI y utilería: Poly Haven (CC0) · Uso no comercial', 20, H - 50, W - 40);
+    ctx.fillText('Personal y equipos: Meshy AI · Narración y efectos: ElevenLabs · Texturas, HDRI y utilería: Poly Haven (CC0) · Uso no comercial', 20, H - 50, W - 40);
   }
   tabScenario(ctx, W, H, y0) {
     const d = S.scenario, eng = this.actions.engine;

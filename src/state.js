@@ -5,6 +5,7 @@ export const S = {
   defenses: false,
   showNetwork: false,
   sound: true,
+  narration: true,
   alarm: false,
   stopReasons: new Set(), // si no está vacío, la línea principal está detenida
   pressStopped: false,

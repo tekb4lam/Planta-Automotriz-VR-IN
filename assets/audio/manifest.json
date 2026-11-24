@@ -1,0 +1,437 @@
+{
+ "voice": "Angelica (ElevenLabs, español mexicano)",
+ "model": "eleven_v4",
+ "sfx": {
+  "correo": {
+   "file": "audio/sfx/correo.mp3",
+   "dur": 2.04
+  },
+  "teclado": {
+   "file": "audio/sfx/teclado.mp3",
+   "dur": 2.51
+  },
+  "intrusion": {
+   "file": "audio/sfx/intrusion.mp3",
+   "dur": 2.51
+  },
+  "bloqueo": {
+   "file": "audio/sfx/bloqueo.mp3",
+   "dur": 2.04
+  },
+  "virus": {
+   "file": "audio/sfx/virus.mp3",
+   "dur": 3.03
+  },
+  "pantallas": {
+   "file": "audio/sfx/pantallas.mp3",
+   "dur": 3.03
+  },
+  "apagado": {
+   "file": "audio/sfx/apagado.mp3",
+   "dur": 4.05
+  },
+  "usb": {
+   "file": "audio/sfx/usb.mp3",
+   "dur": 1.52
+  },
+  "descarga": {
+   "file": "audio/sfx/descarga.mp3",
+   "dur": 2.51
+  },
+  "robots": {
+   "file": "audio/sfx/robots.mp3",
+   "dur": 4.05
+  },
+  "alarma": {
+   "file": "audio/sfx/alarma.mp3",
+   "dur": 3.03
+  },
+  "prensa_rapida": {
+   "file": "audio/sfx/prensa_rapida.mp3",
+   "dur": 4.05
+  },
+  "choque": {
+   "file": "audio/sfx/choque.mp3",
+   "dur": 3.03
+  },
+  "wifi": {
+   "file": "audio/sfx/wifi.mp3",
+   "dur": 2.51
+  },
+  "agv": {
+   "file": "audio/sfx/agv.mp3",
+   "dur": 3.03
+  },
+  "colision": {
+   "file": "audio/sfx/colision.mp3",
+   "dur": 2.04
+  },
+  "quemadores": {
+   "file": "audio/sfx/quemadores.mp3",
+   "dur": 3.03
+  },
+  "incendio": {
+   "file": "audio/sfx/incendio.mp3",
+   "dur": 4.05
+  },
+  "tormenta": {
+   "file": "audio/sfx/tormenta.mp3",
+   "dur": 4.05
+  },
+  "congelado": {
+   "file": "audio/sfx/congelado.mp3",
+   "dur": 2.04
+  },
+  "intermitente": {
+   "file": "audio/sfx/intermitente.mp3",
+   "dur": 4.05
+  }
+ },
+ "scenarios": {
+  "ransomware": {
+   "intro": {
+    "file": "audio/voz/ransomware_intro.mp3",
+    "dur": 7.76
+   },
+   "steps": [
+    {
+     "voz": {
+      "file": "audio/voz/ransomware_0.mp3",
+      "dur": 8.33
+     },
+     "sfx": "correo"
+    },
+    {
+     "voz": {
+      "file": "audio/voz/ransomware_1.mp3",
+      "dur": 6.64
+     },
+     "sfx": "teclado"
+    },
+    {
+     "voz": {
+      "file": "audio/voz/ransomware_2.mp3",
+      "dur": 5.64
+     },
+     "sfx": "virus"
+    },
+    {
+     "voz": {
+      "file": "audio/voz/ransomware_3.mp3",
+      "dur": 7.0
+     },
+     "sfx": "pantallas"
+    },
+    {
+     "voz": {
+      "file": "audio/voz/ransomware_4.mp3",
+      "dur": 7.89
+     },
+     "sfx": "apagado"
+    },
+    {
+     "voz": {
+      "file": "audio/voz/ransomware_5.mp3",
+      "dur": 12.28
+     },
+     "sfx": null
+    }
+   ],
+   "gate": {
+    "voz": {
+     "file": "audio/voz/ransomware_bloqueo.mp3",
+     "dur": 15.39
+    },
+    "sfx": "bloqueo"
+   },
+   "outro": {
+    "file": "audio/voz/ransomware_cierre.mp3",
+    "dur": 11.15
+   }
+  },
+  "robots": {
+   "intro": {
+    "file": "audio/voz/robots_intro.mp3",
+    "dur": 3.94
+   },
+   "steps": [
+    {
+     "voz": {
+      "file": "audio/voz/robots_0.mp3",
+      "dur": 10.68
+     },
+     "sfx": "usb"
+    },
+    {
+     "voz": {
+      "file": "audio/voz/robots_1.mp3",
+      "dur": 6.53
+     },
+     "sfx": "descarga"
+    },
+    {
+     "voz": {
+      "file": "audio/voz/robots_2.mp3",
+      "dur": 5.93
+     },
+     "sfx": "robots"
+    },
+    {
+     "voz": {
+      "file": "audio/voz/robots_3.mp3",
+      "dur": 12.04
+     },
+     "sfx": null
+    },
+    {
+     "voz": {
+      "file": "audio/voz/robots_4.mp3",
+      "dur": 6.14
+     },
+     "sfx": "alarma"
+    },
+    {
+     "voz": {
+      "file": "audio/voz/robots_5.mp3",
+      "dur": 10.97
+     },
+     "sfx": null
+    }
+   ],
+   "gate": {
+    "voz": {
+     "file": "audio/voz/robots_bloqueo.mp3",
+     "dur": 14.52
+    },
+    "sfx": "bloqueo"
+   },
+   "outro": {
+    "file": "audio/voz/robots_cierre.mp3",
+    "dur": 11.34
+   }
+  },
+  "press": {
+   "intro": {
+    "file": "audio/voz/press_intro.mp3",
+    "dur": 4.23
+   },
+   "steps": [
+    {
+     "voz": {
+      "file": "audio/voz/press_0.mp3",
+      "dur": 7.18
+     },
+     "sfx": "teclado"
+    },
+    {
+     "voz": {
+      "file": "audio/voz/press_1.mp3",
+      "dur": 7.84
+     },
+     "sfx": "descarga"
+    },
+    {
+     "voz": {
+      "file": "audio/voz/press_2.mp3",
+      "dur": 6.74
+     },
+     "sfx": "prensa_rapida"
+    },
+    {
+     "voz": {
+      "file": "audio/voz/press_3.mp3",
+      "dur": 8.91
+     },
+     "sfx": "choque"
+    },
+    {
+     "voz": {
+      "file": "audio/voz/press_4.mp3",
+      "dur": 7.47
+     },
+     "sfx": null
+    },
+    {
+     "voz": {
+      "file": "audio/voz/press_5.mp3",
+      "dur": 7.11
+     },
+     "sfx": "apagado"
+    }
+   ],
+   "gate": {
+    "voz": {
+     "file": "audio/voz/press_bloqueo.mp3",
+     "dur": 12.88
+    },
+    "sfx": "bloqueo"
+   },
+   "outro": {
+    "file": "audio/voz/press_cierre.mp3",
+    "dur": 11.68
+   }
+  },
+  "agv": {
+   "intro": {
+    "file": "audio/voz/agv_intro.mp3",
+    "dur": 4.15
+   },
+   "steps": [
+    {
+     "voz": {
+      "file": "audio/voz/agv_0.mp3",
+      "dur": 10.21
+     },
+     "sfx": "wifi"
+    },
+    {
+     "voz": {
+      "file": "audio/voz/agv_1.mp3",
+      "dur": 6.22
+     },
+     "sfx": "intrusion"
+    },
+    {
+     "voz": {
+      "file": "audio/voz/agv_2.mp3",
+      "dur": 4.44
+     },
+     "sfx": "agv"
+    },
+    {
+     "voz": {
+      "file": "audio/voz/agv_3.mp3",
+      "dur": 7.08
+     },
+     "sfx": "colision"
+    },
+    {
+     "voz": {
+      "file": "audio/voz/agv_4.mp3",
+      "dur": 6.77
+     },
+     "sfx": "apagado"
+    }
+   ],
+   "gate": {
+    "voz": {
+     "file": "audio/voz/agv_bloqueo.mp3",
+     "dur": 13.98
+    },
+    "sfx": "bloqueo"
+   },
+   "outro": {
+    "file": "audio/voz/agv_cierre.mp3",
+    "dur": 11.91
+   }
+  },
+  "oven": {
+   "intro": {
+    "file": "audio/voz/oven_intro.mp3",
+    "dur": 4.05
+   },
+   "steps": [
+    {
+     "voz": {
+      "file": "audio/voz/oven_0.mp3",
+      "dur": 7.97
+     },
+     "sfx": "intrusion"
+    },
+    {
+     "voz": {
+      "file": "audio/voz/oven_1.mp3",
+      "dur": 6.11
+     },
+     "sfx": "descarga"
+    },
+    {
+     "voz": {
+      "file": "audio/voz/oven_2.mp3",
+      "dur": 8.72
+     },
+     "sfx": "quemadores"
+    },
+    {
+     "voz": {
+      "file": "audio/voz/oven_3.mp3",
+      "dur": 6.16
+     },
+     "sfx": null
+    },
+    {
+     "voz": {
+      "file": "audio/voz/oven_4.mp3",
+      "dur": 7.81
+     },
+     "sfx": "incendio"
+    }
+   ],
+   "gate": {
+    "voz": {
+     "file": "audio/voz/oven_bloqueo.mp3",
+     "dur": 12.12
+    },
+    "sfx": "bloqueo"
+   },
+   "outro": {
+    "file": "audio/voz/oven_cierre.mp3",
+    "dur": 11.62
+   }
+  },
+  "dos": {
+   "intro": {
+    "file": "audio/voz/dos_intro.mp3",
+    "dur": 4.15
+   },
+   "steps": [
+    {
+     "voz": {
+      "file": "audio/voz/dos_0.mp3",
+      "dur": 6.14
+     },
+     "sfx": "tormenta"
+    },
+    {
+     "voz": {
+      "file": "audio/voz/dos_1.mp3",
+      "dur": 3.66
+     },
+     "sfx": null
+    },
+    {
+     "voz": {
+      "file": "audio/voz/dos_2.mp3",
+      "dur": 7.31
+     },
+     "sfx": "congelado"
+    },
+    {
+     "voz": {
+      "file": "audio/voz/dos_3.mp3",
+      "dur": 8.54
+     },
+     "sfx": "intermitente"
+    },
+    {
+     "voz": {
+      "file": "audio/voz/dos_4.mp3",
+      "dur": 4.44
+     },
+     "sfx": "apagado"
+    }
+   ],
+   "gate": {
+    "voz": {
+     "file": "audio/voz/dos_bloqueo.mp3",
+     "dur": 14.11
+    },
+    "sfx": "bloqueo"
+   },
+   "outro": {
+    "file": "audio/voz/dos_cierre.mp3",
+    "dur": 10.53
+   }
+  }
+ }
+}

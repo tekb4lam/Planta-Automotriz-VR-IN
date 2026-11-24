@@ -31,7 +31,7 @@ export class Audio {
     this.sirenGain = c.createGain(); this.sirenGain.gain.value = 0;
     this.siren.connect(sf).connect(this.sirenGain).connect(this.master); this.siren.start();
   }
-  setEnabled(on) { if (this.master) this.master.gain.value = on ? 0.8 : 0; }
+  setEnabled(on) { if (this.master) { this.master.gain.cancelScheduledValues(this.ctx.currentTime); this.master.gain.value = on ? 0.8 : 0; } }
   vol(pos) {
     if (!S.player || !pos) return 1;
     const d = S.player.distanceTo(pos);
