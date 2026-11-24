@@ -155,7 +155,13 @@ line.onArrive = (b) => {
 let locIdx = 0;
 const actions = {
   engine,
-  start: (id) => { audio.init(); engine.start(id); },
+  start: (id) => {
+    audio.init(); engine.start(id);
+    // lleva a la persona al punto donde comienza el ataque
+    const v = DEFS.find((d) => d.id === id)?.view;
+    const l = v && (v.loc ? LOCATIONS.find((x) => x.id === v.loc) : v);
+    if (l) player.teleportTo(l.x, l.y || 0, l.z, l.yaw, l.pitch || 0);
+  },
   startN: (n) => { const d = DEFS.find((x) => x.n === n); if (d) actions.start(d.id); },
   reset: () => { resetAll(); S.ui.tab = 'riesgos'; },
   go: (l) => { player.teleportTo(l.x, l.y, l.z, l.yaw, l.pitch || 0); },

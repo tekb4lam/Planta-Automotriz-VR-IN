@@ -6,6 +6,7 @@ const LINE_Z = ['biw', 'paint', 'oven', 'asm', 'qc'];
 export const DEFS = [
   {
     id: 'ransomware', n: 1, title: 'Ransomware: de IT a OT', short: 'Phishing → movimiento lateral → cifrado de SCADA/HMI',
+    view: { x: -109.3, y: 0, z: -38.1, yaw: 0.5, pitch: -0.3, where: 'Oficinas IT: laptop de la víctima' },
     techniques: ['T0865 Spearphishing Attachment', 'T0886 Remote Services', 'T0867 Lateral Tool Transfer', 'T0815 Denial of View', 'T0828 Loss of Productivity and Revenue'],
     ref: 'Caso real: el ciberataque a Jaguar Land Rover (ago-2025) detuvo su producción global ~5 semanas; Honda (2020) paró plantas por el ransomware EKANS.',
     mitig: ['Segmentación IT/OT con DMZ (IEC 62443: zonas y conductos)', 'MFA y jump server para todo acceso remoto', 'EDR / lista blanca de aplicaciones en HMI', 'Respaldos offline probados y plan de recuperación', 'Concientización y simulacros de phishing'],
@@ -21,6 +22,7 @@ export const DEFS = [
   },
   {
     id: 'robots', n: 2, title: 'Lógica alterada en robots de soldadura', short: 'Laptop de tercero → descarga de programa al PLC',
+    view: { x: -14.9, y: 0, z: 4.6, yaw: 0.55, pitch: -0.1, where: 'Carrocería: laptop del contratista' },
     techniques: ['T0843 Program Download', 'T0889 Modify Program', 'T0831 Manipulation of Control', 'T0832 Manipulation of View', 'T0880 Loss of Safety'],
     ref: 'Concepto análogo a Stuxnet (2010): lógica de PLC alterada mientras el operador veía valores normales.',
     mitig: ['NAC: solo equipos registrados en la red de mantenimiento', 'Programas firmados, verificación de hash y gestión de cambios', 'Llave física del PLC en modo RUN', 'Monitoreo pasivo de red OT (descargas de programa)', 'Safety PLC / envolventes independientes del PLC de proceso'],
@@ -36,6 +38,7 @@ export const DEFS = [
   },
   {
     id: 'press', n: 3, title: 'Comandos no autorizados a prensas', short: 'Escritura Modbus/TCP → sobrevelocidad → choque de troquel',
+    view: { loc: 'control', where: 'Sala de control: HMI comprometida' },
     techniques: ['T0855 Unauthorized Command Message', 'T0836 Modify Parameter', 'T0879 Damage to Property', 'T0880 Loss of Safety', 'T0828 Loss of Productivity and Revenue'],
     ref: 'Caso documentado: el BSI alemán reportó (2014) daño físico grave en un alto horno de una acería tras un ciberataque.',
     mitig: ['Firewall industrial con DPI: solo lectura desde HMI', 'Protocolos con autenticación (CIP Security, Modbus/TCP Security)', 'Límites de velocidad en hardware y SIS independiente', 'Alertas por cambio de parámetros críticos', 'Cuentas nominativas en estaciones de ingeniería'],
@@ -51,6 +54,7 @@ export const DEFS = [
   },
   {
     id: 'agv', n: 4, title: 'Secuestro inalámbrico de AGVs', short: 'Wi-Fi débil → servidor de flota falso → rutas maliciosas',
+    view: { x: 100.6, y: 0, z: 30.4, yaw: 0.6, pitch: -0.1, where: 'Almacén: dispositivo intruso' },
     techniques: ['T0860 Wireless Compromise', 'T0848 Rogue Master', 'T0855 Unauthorized Command Message', 'T0880 Loss of Safety', 'T0828 Loss of Productivity and Revenue'],
     ref: 'Los vehículos autónomos dependen de la red: si el canal de mando no se autentica, quien lo controla controla la flota.',
     mitig: ['802.1X / WPA3-Enterprise con certificado por dispositivo', 'Detección inalámbrica (WIDS) de equipos intrusos', 'Segmentación y lista blanca para la red de AGVs', 'Geocercas y paro por escáner de seguridad, independiente de la red', 'Autenticación de mensajes del servidor de flota'],
@@ -65,6 +69,7 @@ export const DEFS = [
   },
   {
     id: 'oven', n: 5, title: 'Lecturas falsas en el horno de pintura', short: 'Adversary-in-the-middle → temperatura falsificada',
+    view: { loc: 'control', where: 'Sala de control: servidor SCADA' },
     techniques: ['T0830 Adversary-in-the-Middle', 'T0856 Spoof Reporting Message', 'T0832 Manipulation of View', 'T0836 Modify Parameter', 'T0879 Damage to Property', 'T0880 Loss of Safety'],
     ref: 'Stuxnet (2010) mostraba lecturas normales al operador mientras dañaba el proceso; TRITON (2017) atacó directamente un sistema instrumentado de seguridad.',
     mitig: ['Medición redundante y alarmas por discrepancia', 'SIS independiente de la red de control', 'Integridad y autenticación de mensajes de proceso', 'Monitoreo OT de anomalías de proceso', 'Termómetro / indicador local verificado en ronda'],
@@ -79,6 +84,7 @@ export const DEFS = [
   },
   {
     id: 'dos', n: 6, title: 'Denegación de servicio en red OT', short: 'Tormenta de tráfico → pérdida de vista y de control',
+    view: { loc: 'control', where: 'Sala de control: origen del tráfico' },
     techniques: ['T0814 Denial of Service', 'T0815 Denial of View', 'T0813 Denial of Control', 'T0826 Loss of Availability', 'T0828 Loss of Productivity and Revenue'],
     ref: 'Muchos PLC y switches industriales antiguos fallan ante ráfagas de tráfico o escaneos agresivos, incluso sin intención maliciosa.',
     mitig: ['Storm-control y QoS en switches industriales', 'Segmentación y redundancia (anillos)', 'Línea base y monitoreo del tráfico OT', 'Protección de puertos y deshabilitar los no usados', 'Escaneos activos solo en ventanas controladas'],
