@@ -118,6 +118,7 @@ const ctx = {
   laptop(mode) { hud.drawLaptop(mode); },
   robotsRogue() { line.robots.filter((r) => r.zone === 'biw').forEach((r) => (r.r.mode = 'rogue')); },
   toast(def, entry) { hud.showToast(def, entry); },
+  goto(id) { const l = LOCATIONS.find((x) => x.id === id); if (l) player.teleportTo(l.x, l.y || 0, l.z, l.yaw, l.pitch || 0); },
   fwFlash() { W.fwLed.emissive.setHex(0x33ff66); },
   resetAll,
 };

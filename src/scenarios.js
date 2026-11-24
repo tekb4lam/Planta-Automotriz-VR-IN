@@ -46,10 +46,10 @@ export const DEFS = [
       { t: 0, text: 'Una estación HMI de la sala de control está comprometida y el atacante tiene acceso a la red de control.', run: (c) => { c.compromise('hmi'); c.mark('hmi', 'HMI comprometida', '#ffb020'); c.zone('ctrl', 'warn', 'Acceso sospechoso'); } },
       { t: 5, text: 'Envía comandos de escritura Modbus/TCP —un protocolo sin autenticación— directamente al PLC de prensas.', gate: 'BLOQUEADO: el firewall industrial con inspección profunda (DPI) solo permite funciones de lectura hacia el PLC; la escritura se descarta y se genera una alerta.',
         run: (c, b) => { c.net.stream(['hmi', 'plc_press'], RED, { blockAt: b ? 'plc_press' : null, life: b ? 10 : 6, rate: 8 }); } },
-      { t: 9, text: 'Parámetro de velocidad modificado: la prensa pasa de 12 a 40 golpes por minuto, fuera de su rango seguro.', run: (c) => { c.compromise('plc_press'); c.press.overspeed(); c.zone('press', 'attack', 'Sobrevelocidad'); c.mark('plc_press', 'Comando no autorizado', '#ff3030'); } },
+      { t: 9, go: 'prensas', text: 'Parámetro de velocidad modificado: la prensa pasa de 12 a 40 golpes por minuto, fuera de su rango seguro.', run: (c) => { c.compromise('plc_press'); c.press.overspeed(); c.zone('press', 'attack', 'Sobrevelocidad'); c.mark('plc_press', 'Comando no autorizado', '#ff3030'); } },
       { t: 17, kind: 'impact', text: 'El transfer pierde sincronía: lámina atascada y choque de troquel. Daño a herramentales y riesgo para el personal.', run: (c) => { c.press.crash(2); c.zone('press', 'stop', 'Choque de troquel'); c.alarm(true); S.kpi.safety++; c.mark('press2', 'Choque de troquel', '#ff3030'); } },
       { t: 25, kind: 'impact', text: 'Sin paneles estampados, Carrocería consume su inventario intermedio. Un troquel dañado puede tardar semanas en repararse.' },
-      { t: 33, kind: 'impact', text: 'Inventario de paneles agotado: Carrocería y el resto de la línea se detienen.', run: (c) => { c.stop('press'); c.zone('biw', 'stop', 'Sin paneles'); } },
+      { t: 33, go: 'subens', kind: 'impact', text: 'Inventario de paneles agotado: Carrocería y el resto de la línea se detienen.', run: (c) => { c.stop('press'); c.zone('biw', 'stop', 'Sin paneles'); } },
     ],
   },
   {
@@ -77,7 +77,7 @@ export const DEFS = [
       { t: 0, text: 'Malware en el servidor SCADA se coloca entre el HMI y el PLC del horno (adversary-in-the-middle).', run: (c) => { c.compromise('scada'); c.mark('scada', 'SCADA comprometido', '#ffb020'); c.zone('ctrl', 'warn', 'Tráfico anómalo'); } },
       { t: 5, text: 'Intercepta y altera los mensajes: falsifica la lectura de temperatura y sube la consigna de los quemadores.', gate: 'BLOQUEADO: sensores redundantes detectan la discrepancia y el sistema instrumentado de seguridad (SIS), independiente de la red, apaga los quemadores.',
         run: (c, b) => { c.net.stream(['scada', 'plc_oven'], RED, { blockAt: b ? 'plc_oven' : null, life: b ? 10 : 8, rate: 8 }); } },
-      { t: 9, text: 'El HMI muestra 180 °C estables… mientras el termómetro local del horno sube sin control.', run: (c) => { c.compromise('plc_oven'); S.hmi.spoofOven = true; S.ovenTarget = 335; S.attackFx.oven = true; c.zone('oven', 'attack', 'Temperatura falsa'); c.mark('plc_oven', 'Lecturas falsificadas', '#ff3030'); } },
+      { t: 9, go: 'horno', text: 'El HMI muestra 180 °C estables… mientras el termómetro local del horno sube sin control.', run: (c) => { c.compromise('plc_oven'); S.hmi.spoofOven = true; S.ovenTarget = 335; S.attackFx.oven = true; c.zone('oven', 'attack', 'Temperatura falsa'); c.mark('plc_oven', 'Lecturas falsificadas', '#ff3030'); } },
       { t: 22, kind: 'impact', text: 'Las carrocerías salen con la pintura quemada: el lote completo es scrap o retrabajo.' },
       { t: 32, kind: 'impact', text: 'Humo en el horno, en una zona con solventes inflamables: riesgo de incendio. Se activa la evacuación y la planta se detiene.', run: (c) => { c.stop('oven'); c.alarm(true); c.zone('oven', 'stop', 'Riesgo de incendio'); c.zone('paint', 'stop', 'Evacuación'); S.kpi.safety++; c.mark('ovenbox', 'Riesgo de incendio', '#ff3030'); } },
     ],
@@ -93,8 +93,8 @@ export const DEFS = [
       { t: 3, text: 'El tráfico satura switches y enlaces de la red OT.', gate: 'CONTENIDO: storm-control, QoS y segmentación en los switches industriales limitan el tráfico. La red de control sigue respondiendo y la planta no se detiene.',
         run: (c, b) => { ['plc_press', 'plc_biw', 'plc_paint', 'plc_oven', 'plc_asm', 'plc_qc'].forEach((p) => c.net.stream(['hmi', 'scada', p], RED, { blockAt: b ? 'scada' : null, rate: b ? 3 : 14, speed: 24, line: !b })); } },
       { t: 8, text: 'Los PLC pierden comunicación con HMI y SCADA: pantallas congeladas, "Sin comunicación".', run: (c) => { S.hmi.frozen = true; c.zone('ctrl', 'attack', 'Sin comunicación'); c.mark('scada', 'Red OT saturada', '#ff3030'); } },
-      { t: 12, text: 'Robots y transportadores entran en paro seguro por pérdida de comunicación (watchdog): la línea arranca y se detiene de forma intermitente.', run: (c) => { S.dosStutter = true; LINE_Z.forEach((z) => c.zone(z, 'warn', 'Intermitente')); } },
-      { t: 26, kind: 'impact', text: 'Paro total: la línea queda detenida hasta restablecer la red.', run: (c) => { S.dosStutter = false; c.stop('dos'); c.alarm(true); LINE_Z.forEach((z) => c.zone(z, 'stop', 'Sin red')); } },
+      { t: 12, go: 'biw', text: 'Robots y transportadores entran en paro seguro por pérdida de comunicación (watchdog): la línea arranca y se detiene de forma intermitente.', run: (c) => { S.dosStutter = true; LINE_Z.forEach((z) => c.zone(z, 'warn', 'Intermitente')); } },
+      { t: 26, go: 'aerea', kind: 'impact', text: 'Paro total: la línea queda detenida hasta restablecer la red.', run: (c) => { S.dosStutter = false; c.stop('dos'); c.alarm(true); LINE_Z.forEach((z) => c.zone(z, 'stop', 'Sin red')); } },
     ],
   },
 ];
@@ -143,6 +143,7 @@ export class ScenarioEngine {
         this.ctx.audio.alert();
       } else {
         st.run?.(this.ctx, false);
+        if (st.go) this.ctx.goto?.(st.go); // el ataque se mueve: llevar a la persona a ver el impacto
         this.log.push({ text: st.text, kind: st.kind || 'step', t: this.t });
         const ns = nm && nm.steps[i];
         if (ns) { n.sfx(ns.sfx); n.say(ns.voz); }
